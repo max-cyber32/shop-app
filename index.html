@@ -60,6 +60,14 @@
         .product-price { font-size: 15px; font-weight: 700; color: var(--accent-green); }
         .old-price { font-size: 12px; color: var(--text-dim); text-decoration: line-through; }
 
+        /* Слайдер картинок в карточке товара */
+        .gallery-container { width: 100%; height: 220px; position: relative; overflow: hidden; border-radius: 16px; margin: 10px 0; }
+        .gallery-track { display: flex; height: 100%; transition: transform 0.3s ease-out; }
+        .gallery-slide { min-width: 100%; height: 100%; object-fit: cover; }
+        .gallery-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: #fff; border: none; padding: 8px 12px; border-radius: 50%; cursor: pointer; }
+        .gallery-prev { left: 8px; }
+        .gallery-next { right: 8px; }
+
         /* Шторки (Модалки) */
         .modal { 
             position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); 
@@ -110,7 +118,7 @@
 
         .subtle-btn { background: none; border: none; color: #48484a; font-size: 12px; cursor: pointer; text-decoration: underline; padding: 8px; }
 
-        /* Оверлей анимации успешного действия (Зеленая галочка) */
+        /* Галочка успешного действия */
         .toast-success {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.7);
             background: rgba(28, 28, 30, 0.9); border: 1px solid var(--accent-green);
@@ -119,17 +127,13 @@
             z-index: 300; opacity: 0; pointer-events: none;
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        .toast-success.active {
-            opacity: 1; transform: translate(-50%, -50%) scale(1);
-        }
+        .toast-success.active { opacity: 1; transform: translate(-50%, -50%) scale(1); }
         .checkmark-icon {
             width: 50px; height: 50px; border-radius: 50%; background: var(--accent-green);
             display: flex; align-items: center; justify-content: center;
-            font-size: 28px; color: #000; font-weight: bold;
-            box-shadow: 0 0 20px var(--accent-glow);
+            font-size: 28px; color: #000; font-weight: bold; box-shadow: 0 0 20px var(--accent-glow);
         }
 
-        /* Админские вкладки */
         .admin-tabs { display: flex; gap: 10px; margin-bottom: 15px; }
         .admin-tab-btn { flex: 1; padding: 10px; background: #2c2c2e; border: none; color: #fff; border-radius: 12px; cursor: pointer; font-size: 13px; }
         .admin-tab-btn.active { background: var(--accent-green); color: #000; font-weight: bold; }
@@ -147,7 +151,7 @@
     <div id="tab-goods" class="page active">
         <div class="header-search">
             <input type="text" class="search-input" placeholder="Поиск вещей..." id="searchInput" oninput="filterGoods()">
-            <button class="filter-btn">⚙️</button>
+            <button class="filter-btn" onclick="openFilterMenu()">⚙️</button>
         </div>
         <div class="products-grid" id="productsGrid"></div>
     </div>
@@ -200,7 +204,13 @@
     <!-- Модальное окно просмотра товара -->
     <div class="modal" id="productModal">
         <span class="close-btn" onclick="closeModal('productModal')">&times;</span>
-        <img id="modalImg" style="width:100%; height:220px; object-fit:cover; border-radius:16px; margin: 10px 0;">
+        
+        <div class="gallery-container">
+            <div class="gallery-track" id="modalGalleryTrack"></div>
+            <button class="gallery-btn gallery-prev" onclick="prevSlide()">&lt;</button>
+            <button class="gallery-btn gallery-next" onclick="nextSlide()">&gt;</button>
+        </div>
+
         <h2 id="modalTitle"></h2>
         <div class="price-row" style="margin: 5px 0;">
             <div id="modalPrice" style="color:var(--accent-green); font-size:20px; font-weight:bold;"></div>
@@ -244,7 +254,28 @@
         <button class="btn-main" onclick="checkAdminAuth()">Войти</button>
     </div>
 
-    <!-- Админ Панель (Управление товарами и Заказами) -->
+    <!-- Подтверждение отмены от Админа -->
+    <div class="modal" id="confirmCancelModal" style="justify-content: center; align-items: center;">
+        <div class="glass" style="padding: 20px; width: 100%; text-align: center;">
+            <h3 style="margin-bottom: 10px;">Отменить заказ?</h3>
+            <p style="color:var(--text-dim); font-size:13px; margin-bottom:20px;">Заказ будет отменен и полностью удален из истории.</p>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-main" style="background:var(--danger); color:#fff; box-shadow:none;" onclick="confirmAdminCancel()">Да, отменить</button>
+                <button class="btn-main" style="background:#2c2c2e; color:#fff; box-shadow:none;" onclick="closeModal('confirmCancelModal')">Назад</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Меню Фильтров -->
+    <div class="modal" id="filterModal">
+        <span class="close-btn" onclick="closeModal('filterModal')">&times;</span>
+        <h2 style="margin-bottom: 15px;">Сортировка товаров</h2>
+        <button class="btn-main" style="margin-bottom:10px; background:#2c2c2e; color:#fff; box-shadow:none;" onclick="applySort('asc')">Сначала дешевле</button>
+        <button class="btn-main" style="margin-bottom:10px; background:#2c2c2e; color:#fff; box-shadow:none;" onclick="applySort('desc')">Сначала дороже</button>
+        <button class="btn-main" onclick="applySort('reset')">Сбросить сортировку</button>
+    </div>
+
+    <!-- Админ Панель -->
     <div class="modal" id="adminPanelModal">
         <span class="close-btn" onclick="closeModal('adminPanelModal')">&times;</span>
         <h2 style="margin-bottom: 15px;">Панель Администратора</h2>
@@ -263,16 +294,19 @@
                 <input type="number" class="form-input" id="admPrice" placeholder="Цена (грн)" style="margin-bottom: 8px;">
                 <input type="number" class="form-input" id="admOldPrice" placeholder="Старая цена (если есть)" style="margin-bottom: 8px;">
                 
-                <label class="form-label">Загрузить фото с галереи:</label>
-                <input type="file" id="admFile" accept="image/*" class="form-input" style="margin-bottom: 8px;" onchange="handleFileSelect(event)">
-                <input type="hidden" id="admImg">
+                <label class="form-label">Прикрепить фото из галереи (можно выбрать несколько):</label>
+                <input type="file" id="admFiles" accept="image/*" multiple class="form-input" style="margin-bottom: 8px;" onchange="handleMultipleFiles(event)">
 
                 <input type="text" class="form-input" id="admDesc" placeholder="Описание" style="margin-bottom: 8px;">
                 <input type="text" class="form-input" id="admSizes" placeholder="Размеры через запятую (S, M, L)" style="margin-bottom: 8px;">
-                <button class="btn-main" onclick="saveProductAdmin()">Сохранить товар</button>
+                
+                <div style="display:flex; gap:8px;">
+                    <button class="btn-main" style="flex:1; background:#2c2c2e; color:#fff; box-shadow:none;" onclick="previewProductAdmin()">👁 Предпросмотр</button>
+                    <button class="btn-main" style="flex:1;" onclick="saveProductAdmin()">Выставить товар</button>
+                </div>
             </div>
 
-            <h3>Лента товаров (Предпросмотр)</h3>
+            <h3>Лента товаров</h3>
             <div id="adminProductsList" class="products-grid" style="margin-top: 10px;"></div>
         </div>
 
@@ -295,22 +329,24 @@
         tg.expand();
 
         let products = JSON.parse(localStorage.getItem('storeProducts')) || [
-            { id: 1, name: "Oversize Black Hoodie", price: 1800, oldPrice: 2200, img: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=400", desc: "100% Плотный хлопок. Оверсайз крой.", sizes: ["S", "M", "XL"] },
-            { id: 2, name: "Nike Air Max Red", price: 3200, oldPrice: 0, img: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400", desc: "Премиум кроссовки с амортизацией.", sizes: ["41", "43"] },
-            { id: 3, name: "Techwear Cargo Pants", price: 2100, oldPrice: 2500, img: "https://images.unsplash.com/photo-1517445312882-bc9910d016b7?w=400", desc: "Водоотталкивающая ткань с карманами.", sizes: ["M", "L"] }
+            { id: 1, name: "Oversize Black Hoodie", price: 1800, oldPrice: 2200, images: ["https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=400"], desc: "100% Плотный хлопок. Оверсайз крой.", sizes: ["S", "M", "XL"] },
+            { id: 2, name: "Nike Air Max Red", price: 3200, oldPrice: 0, images: ["https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400"], desc: "Премиум кроссовки с амортизацией.", sizes: ["41", "43"] },
+            { id: 3, name: "Techwear Cargo Pants", price: 2100, oldPrice: 2500, images: ["https://images.unsplash.com/photo-1517445312882-bc9910d016b7?w=400"], desc: "Водоотталкивающая ткань с карманами.", sizes: ["M", "L"] }
         ];
 
         let orders = JSON.parse(localStorage.getItem('storeOrders')) || [];
         let cart = [];
         let currentProduct = null;
         let selectedSize = null;
+        let adminUploadedImages = [];
+        let currentSlideIndex = 0;
+        let selectedCancelOrderId = null;
 
         function init() {
             renderProducts(products, 'productsGrid');
             loadProfile();
         }
 
-        /* Анимация галочки */
         function showSuccessToast(msg) {
             document.getElementById('toastMessage').innerText = msg || 'Успешно';
             const toast = document.getElementById('toastSuccess');
@@ -322,7 +358,7 @@
             const grid = document.getElementById(targetId);
             grid.innerHTML = items.map(p => `
                 <div class="product-card glass" onclick="openProduct(${p.id})">
-                    <img src="${p.img}" class="product-img">
+                    <img src="${(p.images && p.images[0]) ? p.images[0] : p.img}" class="product-img">
                     <div class="product-title">${p.name}</div>
                     <div class="price-row">
                         <div class="product-price">${p.price} грн</div>
@@ -342,7 +378,13 @@
 
         function openProduct(id) {
             currentProduct = products.find(p => p.id === id);
-            document.getElementById('modalImg').src = currentProduct.img;
+            const imgs = currentProduct.images || [currentProduct.img];
+            
+            const track = document.getElementById('modalGalleryTrack');
+            track.innerHTML = imgs.map(img => `<img src="${img}" class="gallery-slide">`).join('');
+            currentSlideIndex = 0;
+            updateGalleryPosition();
+
             document.getElementById('modalTitle').innerText = currentProduct.name;
             document.getElementById('modalPrice').innerText = `${currentProduct.price} грн`;
             document.getElementById('modalOldPrice').innerText = currentProduct.oldPrice ? `${currentProduct.oldPrice} грн` : '';
@@ -355,6 +397,22 @@
 
             selectedSize = null;
             document.getElementById('productModal').classList.add('active');
+        }
+
+        function updateGalleryPosition() {
+            const track = document.getElementById('modalGalleryTrack');
+            track.style.transform = `translateX(-${currentSlideIndex * 100}%)`;
+        }
+
+        function nextSlide() {
+            const imgs = currentProduct.images || [currentProduct.img];
+            if (currentSlideIndex < imgs.length - 1) currentSlideIndex++;
+            updateGalleryPosition();
+        }
+
+        function prevSlide() {
+            if (currentSlideIndex > 0) currentSlideIndex--;
+            updateGalleryPosition();
         }
 
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
@@ -399,7 +457,7 @@
 
         function removeFromCart(idx) { cart.splice(idx, 1); renderCart(); }
 
-        /* Профиль и валидация */
+        /* Профиль и Валидация */
         function isProfileValid() {
             const name = document.getElementById('profName').value.trim();
             const phone = document.getElementById('profPhone').value.trim();
@@ -462,7 +520,8 @@
                 profile: profile,
                 payMethod: method,
                 total: cart.reduce((sum, item) => sum + item.price, 0),
-                status: 'В обработке'
+                status: 'В обработке',
+                ttn: ''
             };
 
             orders.unshift(newOrder);
@@ -473,7 +532,7 @@
             showSuccessToast("Заказ оформлен!");
         }
 
-        /* Заказы покупателя */
+        /* Окно "Мои Заказы" для пользователя */
         function openMyOrders() {
             const container = document.getElementById('userOrdersList');
             if (orders.length === 0) {
@@ -481,16 +540,17 @@
             } else {
                 const now = Date.now();
                 container.innerHTML = orders.map(o => {
-                    const isCancelable = (now - o.date) < 3600000 && o.status !== 'Отменен'; // Можно отменить в течение 1 часа
+                    const isCancelable = (now - o.date) < 3600000 && o.status !== 'Отменен';
                     return `
                         <div class="glass" style="padding:14px; margin-bottom:12px;">
-                            <div style="display:flex; justify-shadow:space-between; justify-content:space-between; margin-bottom:6px;">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
                                 <strong>#${o.id}</strong>
-                                <span style="color:var(--accent-green); font-weight:bold;">${o.status}</span>
+                                <span style="color:${o.status === 'Отменен' ? 'var(--danger)' : 'var(--accent-green)'}; font-weight:bold;">${o.status}</span>
                             </div>
                             <div style="font-size:13px; color:var(--text-dim); margin-bottom:8px;">
                                 ${o.cart.map(i => `${i.name} (${i.selectedSize})`).join(', ')}
                             </div>
+                            ${o.ttn ? `<div style="font-size:12px; color:var(--accent-green); margin-bottom:6px;">📦 ТТН Новой Почты: <strong>${o.ttn}</strong></div>` : ''}
                             <div style="display:flex; justify-content:space-between; align-items:center;">
                                 <strong style="color:var(--accent-green);">${o.total} грн</strong>
                                 ${isCancelable ? `<button class="subtle-btn" style="color:var(--danger);" onclick="cancelUserOrder('${o.id}')">Отменить заказ</button>` : ''}
@@ -512,9 +572,21 @@
             }
         }
 
-        /* Поддержка и Админка */
+        /* Техподдержка */
         function openSupport() { tg.openTelegramLink("https://t.me/Burimssdvvvv"); }
 
+        /* Фильтры */
+        function openFilterMenu() { document.getElementById('filterModal').classList.add('active'); }
+
+        function applySort(type) {
+            let sorted = [...products];
+            if (type === 'asc') sorted.sort((a, b) => a.price - b.price);
+            if (type === 'desc') sorted.sort((a, b) => b.price - a.price);
+            renderProducts(sorted, 'productsGrid');
+            closeModal('filterModal');
+        }
+
+        /* Админка */
         function openAdminLogin() { document.getElementById('adminAuthModal').classList.add('active'); }
 
         function checkAdminAuth() {
@@ -535,23 +607,53 @@
             document.getElementById('adminTabOrdersContent').style.display = tab === 'orders' ? 'block' : 'none';
         }
 
-        /* Фото с галереи */
-        function handleFileSelect(event) {
-            const file = event.target.files[0];
-            if (file) {
+        /* Выбор множества фото из галереи */
+        function handleMultipleFiles(event) {
+            const files = Array.from(event.target.files);
+            adminUploadedImages = [];
+            let loadedCount = 0;
+
+            files.forEach(file => {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    document.getElementById('admImg').value = e.target.result;
+                    adminUploadedImages.push(e.target.result);
+                    loadedCount++;
                 };
                 reader.readAsDataURL(file);
-            }
+            });
+        }
+
+        function previewProductAdmin() {
+            const name = document.getElementById('admName').value || "Новый товар";
+            const price = parseInt(document.getElementById('admPrice').value) || 0;
+            const oldPrice = parseInt(document.getElementById('admOldPrice').value) || 0;
+            const desc = document.getElementById('admDesc').value || "Описание товара";
+            const sizes = document.getElementById('admSizes').value.split(',').map(s => s.trim());
+            const images = adminUploadedImages.length > 0 ? adminUploadedImages : ["https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=400"];
+
+            currentProduct = { name, price, oldPrice, desc, sizes, images };
+            
+            const track = document.getElementById('modalGalleryTrack');
+            track.innerHTML = images.map(img => `<img src="${img}" class="gallery-slide">`).join('');
+            currentSlideIndex = 0;
+            updateGalleryPosition();
+
+            document.getElementById('modalTitle').innerText = name;
+            document.getElementById('modalPrice').innerText = `${price} грн`;
+            document.getElementById('modalOldPrice').innerText = oldPrice ? `${oldPrice} грн` : '';
+            document.getElementById('modalDesc').innerText = desc;
+
+            const sizesContainer = document.getElementById('modalSizes');
+            sizesContainer.innerHTML = sizes.map(s => `<div class="size-chip">${s}</div>`).join('');
+
+            document.getElementById('productModal').classList.add('active');
         }
 
         function renderAdminProducts() {
             const container = document.getElementById('adminProductsList');
             container.innerHTML = products.map(p => `
                 <div class="product-card glass">
-                    <img src="${p.img}" class="product-img">
+                    <img src="${(p.images && p.images[0]) ? p.images[0] : p.img}" class="product-img">
                     <div class="product-title">${p.name}</div>
                     <div class="product-price">${p.price} грн</div>
                     <div style="margin-top:8px; display:flex; justify-content:space-between;">
@@ -582,14 +684,28 @@
                     <div style="font-size:12px; margin-bottom:8px;">
                         <strong>Товары:</strong> ${o.cart.map(i => `${i.name} [${i.selectedSize}]`).join(', ')}
                     </div>
+                    
+                    <div class="form-group" style="margin-bottom:8px;">
+                        <input type="text" class="form-input" placeholder="Введите ТТН Новой Почты..." value="${o.ttn || ''}" onchange="updateTTN('${o.id}', this.value)">
+                    </div>
+
                     <div style="display:flex; gap:6px; flex-wrap:wrap;">
                         <button class="subtle-btn" style="color:var(--accent-green);" onclick="changeOrderStatus('${o.id}', 'Принят')">Принять</button>
                         <button class="subtle-btn" style="color:#60efff;" onclick="changeOrderStatus('${o.id}', 'Отправлен')">Отправлен</button>
                         <button class="subtle-btn" style="color:var(--accent-green);" onclick="changeOrderStatus('${o.id}', 'Доставлен')">Доставлен</button>
-                        <button class="subtle-btn" style="color:var(--danger);" onclick="changeOrderStatus('${o.id}', 'Отменен')">Отменить</button>
+                        <button class="subtle-btn" style="color:var(--danger);" onclick="askAdminCancel('${o.id}')">Отменить</button>
                     </div>
                 </div>
             `).join('');
+        }
+
+        function updateTTN(orderId, val) {
+            const ord = orders.find(o => o.id === orderId);
+            if (ord) {
+                ord.ttn = val;
+                localStorage.setItem('storeOrders', JSON.stringify(orders));
+                showSuccessToast("ТТН обновлен");
+            }
         }
 
         function changeOrderStatus(orderId, newStatus) {
@@ -601,22 +717,37 @@
             }
         }
 
+        function askAdminCancel(orderId) {
+            selectedCancelOrderId = orderId;
+            document.getElementById('confirmCancelModal').classList.add('active');
+        }
+
+        function confirmAdminCancel() {
+            if (selectedCancelOrderId) {
+                orders = orders.filter(o => o.id !== selectedCancelOrderId);
+                localStorage.setItem('storeOrders', JSON.stringify(orders));
+                renderAdminOrders();
+                closeModal('confirmCancelModal');
+                showSuccessToast("Заказ отменен и удален");
+            }
+        }
+
         function saveProductAdmin() {
             const id = document.getElementById('editProdId').value;
             const name = document.getElementById('admName').value;
             const price = parseInt(document.getElementById('admPrice').value);
             const oldPrice = parseInt(document.getElementById('admOldPrice').value) || 0;
-            const img = document.getElementById('admImg').value;
             const desc = document.getElementById('admDesc').value;
             const sizes = document.getElementById('admSizes').value.split(',').map(s => s.trim());
+            const images = adminUploadedImages.length > 0 ? adminUploadedImages : ["https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=400"];
 
             if (!name || !price) return;
 
             if (id) {
                 const prod = products.find(p => p.id == id);
-                Object.assign(prod, { name, price, oldPrice, img, desc, sizes });
+                Object.assign(prod, { name, price, oldPrice, images, desc, sizes });
             } else {
-                products.push({ id: Date.now(), name, price, oldPrice, img: img || "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=400", desc, sizes });
+                products.push({ id: Date.now(), name, price, oldPrice, images, desc, sizes });
             }
 
             localStorage.setItem('storeProducts', JSON.stringify(products));
@@ -627,10 +758,10 @@
             document.getElementById('admName').value = '';
             document.getElementById('admPrice').value = '';
             document.getElementById('admOldPrice').value = '';
-            document.getElementById('admImg').value = '';
             document.getElementById('admDesc').value = '';
             document.getElementById('admSizes').value = '';
-            showSuccessToast("Товар сохранен");
+            adminUploadedImages = [];
+            showSuccessToast("Товар выставлен");
         }
 
         function editProductAdmin(id) {
@@ -639,9 +770,9 @@
             document.getElementById('admName').value = p.name;
             document.getElementById('admPrice').value = p.price;
             document.getElementById('admOldPrice').value = p.oldPrice || '';
-            document.getElementById('admImg').value = p.img;
             document.getElementById('admDesc').value = p.desc;
             document.getElementById('admSizes').value = p.sizes.join(', ');
+            adminUploadedImages = p.images || [];
         }
 
         function deleteProductAdmin(id) {
