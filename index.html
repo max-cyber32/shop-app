@@ -61,10 +61,10 @@
         .old-price { font-size: 12px; color: var(--text-dim); text-decoration: line-through; }
 
         /* Слайдер картинок в карточке товара */
-        .gallery-container { width: 100%; height: 220px; position: relative; overflow: hidden; border-radius: 16px; margin: 10px 0; }
+        .gallery-container { width: 100%; height: 220px; position: relative; overflow: hidden; border-radius: 16px; margin: 10px 0; background: #1c1c1e; }
         .gallery-track { display: flex; height: 100%; transition: transform 0.3s ease-out; }
         .gallery-slide { min-width: 100%; height: 100%; object-fit: cover; }
-        .gallery-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: #fff; border: none; padding: 8px 12px; border-radius: 50%; cursor: pointer; }
+        .gallery-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.6); color: #fff; border: none; padding: 8px 12px; border-radius: 50%; cursor: pointer; z-index: 10; }
         .gallery-prev { left: 8px; }
         .gallery-next { right: 8px; }
 
@@ -77,6 +77,7 @@
             transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
         }
         .modal.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
+        .modal-top { z-index: 500 !important; } /* Перекрытие поверх админки */
         .close-btn { align-self: flex-end; font-size: 26px; color: var(--text-dim); cursor: pointer; }
 
         /* Размеры */
@@ -124,7 +125,7 @@
             background: rgba(28, 28, 30, 0.9); border: 1px solid var(--accent-green);
             backdrop-filter: blur(20px); border-radius: 25px; padding: 25px 35px;
             display: flex; flex-direction: column; align-items: center; gap: 10px;
-            z-index: 300; opacity: 0; pointer-events: none;
+            z-index: 600; opacity: 0; pointer-events: none;
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .toast-success.active { opacity: 1; transform: translate(-50%, -50%) scale(1); }
@@ -167,6 +168,12 @@
     <div id="tab-cart" class="page">
         <h2 style="margin-bottom: 15px;">Корзина</h2>
         <div id="cartList"></div>
+        
+        <div class="form-group" style="margin-top: 15px;">
+            <label class="form-label">Комментарий к заказу (необязательно)</label>
+            <input type="text" class="form-input" id="orderComment" placeholder="Укажите пожелания или уточнения...">
+        </div>
+
         <div id="cartSummary" style="margin-top: 15px; font-size: 18px; font-weight: bold; text-align: right;">Итого: 0 грн</div>
         <button class="btn-main" style="margin-top: 15px;" onclick="proceedToCheckout()">Оформить заказ</button>
     </div>
@@ -220,7 +227,7 @@
         
         <div style="font-size:13px; font-weight:600;">Выбор размера:</div>
         <div class="sizes-row" id="modalSizes"></div>
-        <button class="btn-main" onclick="addSelectedToCart()">В корзину</button>
+        <button class="btn-main" id="modalAddBtn" onclick="addSelectedToCart()">В корзину</button>
     </div>
 
     <!-- Модальное окно "Мои Заказы" -->
@@ -254,8 +261,8 @@
         <button class="btn-main" onclick="checkAdminAuth()">Войти</button>
     </div>
 
-    <!-- Подтверждение отмены от Админа -->
-    <div class="modal" id="confirmCancelModal" style="justify-content: center; align-items: center;">
+    <!-- Подтверждение отмены от Админа (Z-Index высокий) -->
+    <div class="modal modal-top" id="confirmCancelModal" style="justify-content: center; align-items: center;">
         <div class="glass" style="padding: 20px; width: 100%; text-align: center;">
             <h3 style="margin-bottom: 10px;">Отменить заказ?</h3>
             <p style="color:var(--text-dim); font-size:13px; margin-bottom:20px;">Заказ будет отменен и полностью удален из истории.</p>
@@ -294,7 +301,7 @@
                 <input type="number" class="form-input" id="admPrice" placeholder="Цена (грн)" style="margin-bottom: 8px;">
                 <input type="number" class="form-input" id="admOldPrice" placeholder="Старая цена (если есть)" style="margin-bottom: 8px;">
                 
-                <label class="form-label">Прикрепить фото из галереи (можно выбрать несколько):</label>
+                <label class="form-label">Выбрать фото из галереи:</label>
                 <input type="file" id="admFiles" accept="image/*" multiple class="form-input" style="margin-bottom: 8px;" onchange="handleMultipleFiles(event)">
 
                 <input type="text" class="form-input" id="admDesc" placeholder="Описание" style="margin-bottom: 8px;">
@@ -358,7 +365,7 @@
             const grid = document.getElementById(targetId);
             grid.innerHTML = items.map(p => `
                 <div class="product-card glass" onclick="openProduct(${p.id})">
-                    <img src="${(p.images && p.images[0]) ? p.images[0] : p.img}" class="product-img">
+                    <img src="${(p.images && p.images.length > 0) ? p.images[0] : (p.img || '')}" class="product-img">
                     <div class="product-title">${p.name}</div>
                     <div class="price-row">
                         <div class="product-price">${p.price} грн</div>
@@ -378,22 +385,28 @@
 
         function openProduct(id) {
             currentProduct = products.find(p => p.id === id);
-            const imgs = currentProduct.images || [currentProduct.img];
+            const imgs = (currentProduct.images && currentProduct.images.length > 0) ? currentProduct.images : [currentProduct.img];
             
+            showProductModal(currentProduct.name, currentProduct.price, currentProduct.oldPrice, currentProduct.desc, currentProduct.sizes, imgs, true);
+        }
+
+        function showProductModal(name, price, oldPrice, desc, sizes, imgs, showAddBtn = true) {
             const track = document.getElementById('modalGalleryTrack');
             track.innerHTML = imgs.map(img => `<img src="${img}" class="gallery-slide">`).join('');
             currentSlideIndex = 0;
             updateGalleryPosition();
 
-            document.getElementById('modalTitle').innerText = currentProduct.name;
-            document.getElementById('modalPrice').innerText = `${currentProduct.price} грн`;
-            document.getElementById('modalOldPrice').innerText = currentProduct.oldPrice ? `${currentProduct.oldPrice} грн` : '';
-            document.getElementById('modalDesc').innerText = currentProduct.desc;
+            document.getElementById('modalTitle').innerText = name;
+            document.getElementById('modalPrice').innerText = `${price} грн`;
+            document.getElementById('modalOldPrice').innerText = oldPrice ? `${oldPrice} грн` : '';
+            document.getElementById('modalDesc').innerText = desc;
 
             const sizesContainer = document.getElementById('modalSizes');
-            sizesContainer.innerHTML = currentProduct.sizes.map(s => `
+            sizesContainer.innerHTML = sizes.map(s => `
                 <div class="size-chip" onclick="selectSize('${s}', this)">${s}</div>
             `).join('');
+
+            document.getElementById('modalAddBtn').style.display = showAddBtn ? 'block' : 'none';
 
             selectedSize = null;
             document.getElementById('productModal').classList.add('active');
@@ -405,8 +418,9 @@
         }
 
         function nextSlide() {
-            const imgs = currentProduct.images || [currentProduct.img];
-            if (currentSlideIndex < imgs.length - 1) currentSlideIndex++;
+            const track = document.getElementById('modalGalleryTrack');
+            const totalSlides = track.children.length;
+            if (currentSlideIndex < totalSlides - 1) currentSlideIndex++;
             updateGalleryPosition();
         }
 
@@ -424,7 +438,10 @@
         }
 
         function addSelectedToCart() {
-            if (!selectedSize) return;
+            if (!selectedSize) {
+                alert("Пожалуйста, выберите размер");
+                return;
+            }
             cart.push({ ...currentProduct, selectedSize });
             closeModal('productModal');
             showSuccessToast("Добавлено в корзину");
@@ -513,11 +530,14 @@
         function executePayment(method) {
             closeModal('payModal');
             const profile = JSON.parse(localStorage.getItem('userProfile'));
+            const comment = document.getElementById('orderComment').value || 'Нет комментариев';
+
             const newOrder = {
                 id: 'ORD-' + Math.floor(100000 + Math.random() * 900000),
                 date: Date.now(),
                 cart: [...cart],
                 profile: profile,
+                comment: comment,
                 payMethod: method,
                 total: cart.reduce((sum, item) => sum + item.price, 0),
                 status: 'В обработке',
@@ -529,6 +549,7 @@
 
             tg.sendData(JSON.stringify(newOrder));
             cart = [];
+            document.getElementById('orderComment').value = '';
             showSuccessToast("Заказ оформлен!");
         }
 
@@ -550,6 +571,7 @@
                             <div style="font-size:13px; color:var(--text-dim); margin-bottom:8px;">
                                 ${o.cart.map(i => `${i.name} (${i.selectedSize})`).join(', ')}
                             </div>
+                            ${o.comment ? `<div style="font-size:12px; color:var(--text-dim); margin-bottom:6px;">💬 <i>${o.comment}</i></div>` : ''}
                             ${o.ttn ? `<div style="font-size:12px; color:var(--accent-green); margin-bottom:6px;">📦 ТТН Новой Почты: <strong>${o.ttn}</strong></div>` : ''}
                             <div style="display:flex; justify-content:space-between; align-items:center;">
                                 <strong style="color:var(--accent-green);">${o.total} грн</strong>
@@ -607,17 +629,28 @@
             document.getElementById('adminTabOrdersContent').style.display = tab === 'orders' ? 'block' : 'none';
         }
 
-        /* Выбор множества фото из галереи */
+        /* Безопасная загрузка фото из галереи без крашей */
         function handleMultipleFiles(event) {
             const files = Array.from(event.target.files);
             adminUploadedImages = [];
-            let loadedCount = 0;
 
             files.forEach(file => {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    adminUploadedImages.push(e.target.result);
-                    loadedCount++;
+                    // Сжатие картинки перед добавлением (чтобы память не крашилась)
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        const maxWidth = 800;
+                        const scaleSize = maxWidth / img.width;
+                        canvas.width = (img.width > maxWidth) ? maxWidth : img.width;
+                        canvas.height = (img.width > maxWidth) ? (img.height * scaleSize) : img.height;
+
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        adminUploadedImages.push(canvas.toDataURL('image/jpeg', 0.8));
+                    }
                 };
                 reader.readAsDataURL(file);
             });
@@ -628,32 +661,19 @@
             const price = parseInt(document.getElementById('admPrice').value) || 0;
             const oldPrice = parseInt(document.getElementById('admOldPrice').value) || 0;
             const desc = document.getElementById('admDesc').value || "Описание товара";
-            const sizes = document.getElementById('admSizes').value.split(',').map(s => s.trim());
+            const sizesStr = document.getElementById('admSizes').value;
+            const sizes = sizesStr ? sizesStr.split(',').map(s => s.trim()) : ["S", "M", "L"];
+            
             const images = adminUploadedImages.length > 0 ? adminUploadedImages : ["https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=400"];
 
-            currentProduct = { name, price, oldPrice, desc, sizes, images };
-            
-            const track = document.getElementById('modalGalleryTrack');
-            track.innerHTML = images.map(img => `<img src="${img}" class="gallery-slide">`).join('');
-            currentSlideIndex = 0;
-            updateGalleryPosition();
-
-            document.getElementById('modalTitle').innerText = name;
-            document.getElementById('modalPrice').innerText = `${price} грн`;
-            document.getElementById('modalOldPrice').innerText = oldPrice ? `${oldPrice} грн` : '';
-            document.getElementById('modalDesc').innerText = desc;
-
-            const sizesContainer = document.getElementById('modalSizes');
-            sizesContainer.innerHTML = sizes.map(s => `<div class="size-chip">${s}</div>`).join('');
-
-            document.getElementById('productModal').classList.add('active');
+            showProductModal(name, price, oldPrice, desc, sizes, images, false);
         }
 
         function renderAdminProducts() {
             const container = document.getElementById('adminProductsList');
             container.innerHTML = products.map(p => `
                 <div class="product-card glass">
-                    <img src="${(p.images && p.images[0]) ? p.images[0] : p.img}" class="product-img">
+                    <img src="${(p.images && p.images.length > 0) ? p.images[0] : (p.img || '')}" class="product-img">
                     <div class="product-title">${p.name}</div>
                     <div class="product-price">${p.price} грн</div>
                     <div style="margin-top:8px; display:flex; justify-content:space-between;">
@@ -681,6 +701,7 @@
                         Адрес: ${o.profile.address}<br>
                         Оплата: ${o.payMethod} | Итого: ${o.total} грн
                     </div>
+                    ${o.comment ? `<div style="font-size:12px; color:#fff; margin-bottom:6px;">💬 Комментарий: ${o.comment}</div>` : ''}
                     <div style="font-size:12px; margin-bottom:8px;">
                         <strong>Товары:</strong> ${o.cart.map(i => `${i.name} [${i.selectedSize}]`).join(', ')}
                     </div>
