@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streetwear Store</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        body { background-color: var(--tg-theme-bg-color, #121212); color: var(--tg-theme-text-color, #ffffff); padding: 15px; padding-bottom: 90px; }
+        h1 { font-size: 22px; margin-bottom: 15px; text-align: center; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .products-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .product-card { background: #1e1e1e; border-radius: 12px; padding: 10px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid #2a2a2a; }
+        .product-img { width: 100%; height: 130px; object-fit: cover; border-radius: 8px; margin-bottom: 8px; }
+        .product-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .product-price { font-size: 15px; font-weight: 700; color: #40a7e3; margin-bottom: 8px; }
+        
+        .size-selector { display: flex; gap: 4px; margin-bottom: 8px; }
+        .size-btn { flex: 1; padding: 4px 0; background: #2a2a2a; border: 1px solid #333; color: #fff; border-radius: 4px; font-size: 11px; cursor: pointer; text-align: center; }
+        .size-btn.active { background: #40a7e3; border-color: #40a7e3; font-weight: bold; }
+        
+        .add-btn { width: 100%; background: #40a7e3; color: white; border: none; padding: 8px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; }
+        .add-btn:active { opacity: 0.8; }
+        
+        .cart-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1e1e1e; padding: 12px 15px; border-top: 1px solid #2a2a2a; display: flex; justify-content: space-between; align-items: center; }
+        .cart-info { font-size: 14px; font-weight: 600; }
+        .checkout-btn { background: #31b545; color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <h1>STREETWEAR STORE</h1>
+
+    <div class="products-grid">
+        <!-- Товар 1 -->
+        <div class="product-card">
+            <img src="https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=400" class="product-img" alt="Худи">
+            <div class="product-title">Oversize Худи Black</div>
+            <div class="product-price">1 800 грн</div>
+            <div class="size-selector" id="sizes-1">
+                <button class="size-btn active" onclick="selectSize(1, 'M', this)">M</button>
+                <button class="size-btn" onclick="selectSize(1, 'L', this)">L</button>
+                <button class="size-btn" onclick="selectSize(1, 'XL', this)">XL</button>
+            </div>
+            <button class="add-btn" onclick="addToCart('Oversize Худи Black', 1800, 1)">В корзину</button>
+        </div>
+
+        <!-- Товар 2 -->
+        <div class="product-card">
+            <img src="https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=400" class="product-img" alt="Футболка">
+            <div class="product-title">Футболка Basic White</div>
+            <div class="product-price">850 грн</div>
+            <div class="size-selector" id="sizes-2">
+                <button class="size-btn active" onclick="selectSize(2, 'M', this)">M</button>
+                <button class="size-btn" onclick="selectSize(2, 'L', this)">L</button>
+                <button class="size-btn" onclick="selectSize(2, 'XL', this)">XL</button>
+            </div>
+            <button class="add-btn" onclick="addToCart('Футболка Basic White', 850, 2)">В корзину</button>
+        </div>
+
+        <!-- Товар 3 -->
+        <div class="product-card">
+            <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400" class="product-img" alt="Кроссовки">
+            <div class="product-title">Кроссовки Red Style</div>
+            <div class="product-price">3 200 грн</div>
+            <div class="size-selector" id="sizes-3">
+                <button class="size-btn active" onclick="selectSize(3, '41', this)">41</button>
+                <button class="size-btn" onclick="selectSize(3, '42', this)">42</button>
+                <button class="size-btn" onclick="selectSize(3, '43', this)">43</button>
+            </div>
+            <button class="add-btn" onclick="addToCart('Кроссовки Red Style', 3200, 3)">В корзину</button>
+        </div>
+
+        <!-- Товар 4 -->
+        <div class="product-card">
+            <img src="https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400" class="product-img" alt="Свитшот">
+            <div class="product-title">Свитшот Techwear Grey</div>
+            <div class="product-price">1 500 грн</div>
+            <div class="size-selector" id="sizes-4">
+                <button class="size-btn active" onclick="selectSize(4, 'M', this)">M</button>
+                <button class="size-btn" onclick="selectSize(4, 'L', this)">L</button>
+                <button class="size-btn" onclick="selectSize(4, 'XL', this)">XL</button>
+            </div>
+            <button class="add-btn" onclick="addToCart('Свитшот Techwear Grey', 1500, 4)">В корзину</button>
+        </div>
+    </div>
+
+    <!-- Панель корзины снизу -->
+    <div class="cart-bar">
+        <div class="cart-info">Товаров: <span id="cart-count">0</span> | <span id="cart-total">0</span> грн</div>
+        <button class="checkout-btn" onclick="sendOrder()">Заказать</button>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand(); // Раскрываем приложение на весь экран
+
+        let cart = [];
+        let selectedSizes = { 1: 'M', 2: 'M', 3: '41', 4: 'M' };
+
+        function selectSize(productId, size, btn) {
+            selectedSizes[productId] = size;
+            const parent = document.getElementById(`sizes-${productId}`);
+            parent.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        function addToCart(title, price, productId) {
+            const size = selectedSizes[productId];
+            cart.push({ title, price, size });
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            document.getElementById('cart-count').innerText = cart.length;
+            const total = cart.reduce((sum, item) => sum + item.price, 0);
+            document.getElementById('cart-total').innerText = total;
+        }
+
+        function sendOrder() {
+            if (cart.length === 0) {
+                tg.showAlert("Ваша корзина пуста!");
+                return;
+            }
+            const total = cart.reduce((sum, item) => sum + item.price, 0);
+            const orderData = {
+                items: cart,
+                total: total
+            };
+            // Отправляем данные заказа обратно боту
+            tg.sendData(JSON.stringify(orderData));
+        }
+    </script>
+</body>
+</html>
