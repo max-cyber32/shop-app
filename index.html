@@ -28,7 +28,6 @@
             border-radius: 22px;
         }
 
-        /* Плавные расслабляющие анимации */
         .page { 
             display: none; 
             padding: 16px; 
@@ -61,7 +60,7 @@
         .product-price { font-size: 15px; font-weight: 700; color: var(--accent-green); }
         .old-price { font-size: 12px; color: var(--text-dim); text-decoration: line-through; }
 
-        /* Шторка товара и оплаты (iOS Sheet) */
+        /* Шторки (Модалки) */
         .modal { 
             position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); 
             backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
@@ -76,7 +75,6 @@
         .sizes-row { display: flex; gap: 8px; margin: 15px 0; flex-wrap: wrap; }
         .size-chip { padding: 10px 16px; background: #2c2c2e; border-radius: 12px; font-size: 14px; cursor: pointer; border: 1px solid transparent; transition: all 0.3s ease; }
         .size-chip.active { border-color: var(--accent-green); background: rgba(0, 255, 135, 0.15); color: var(--accent-green); font-weight: bold; }
-        .size-chip.disabled { opacity: 0.3; text-decoration: line-through; cursor: not-allowed; }
 
         /* Кнопки */
         .btn-main { 
@@ -99,11 +97,10 @@
         .cart-item { display: flex; align-items: center; justify-content: space-between; padding: 12px; margin-bottom: 10px; }
         .remove-btn { color: var(--danger); font-size: 13px; cursor: pointer; }
 
-        /* Профиль и Формы */
+        /* Формы */
         .form-group { margin-bottom: 12px; }
         .form-label { font-size: 12px; color: var(--text-dim); margin-bottom: 4px; display: block; }
         .form-input { width: 100%; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 12px; padding: 12px; color: #fff; font-size: 14px; outline: none; transition: border-color 0.3s; }
-        .form-input.error { border-color: var(--danger); }
         .error-text { color: var(--danger); font-size: 11px; margin-top: 3px; display: none; }
 
         /* Навигация */
@@ -112,9 +109,39 @@
         .nav-item.active { color: var(--accent-green); font-weight: 600; }
 
         .subtle-btn { background: none; border: none; color: #48484a; font-size: 12px; cursor: pointer; text-decoration: underline; padding: 8px; }
+
+        /* Оверлей анимации успешного действия (Зеленая галочка) */
+        .toast-success {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.7);
+            background: rgba(28, 28, 30, 0.9); border: 1px solid var(--accent-green);
+            backdrop-filter: blur(20px); border-radius: 25px; padding: 25px 35px;
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+            z-index: 300; opacity: 0; pointer-events: none;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .toast-success.active {
+            opacity: 1; transform: translate(-50%, -50%) scale(1);
+        }
+        .checkmark-icon {
+            width: 50px; height: 50px; border-radius: 50%; background: var(--accent-green);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px; color: #000; font-weight: bold;
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        /* Админские вкладки */
+        .admin-tabs { display: flex; gap: 10px; margin-bottom: 15px; }
+        .admin-tab-btn { flex: 1; padding: 10px; background: #2c2c2e; border: none; color: #fff; border-radius: 12px; cursor: pointer; font-size: 13px; }
+        .admin-tab-btn.active { background: var(--accent-green); color: #000; font-weight: bold; }
     </style>
 </head>
 <body>
+
+    <!-- Уведомление с Галочкой -->
+    <div class="toast-success" id="toastSuccess">
+        <div class="checkmark-icon">✓</div>
+        <span id="toastMessage" style="font-size: 15px; font-weight: 600;">Успешно</span>
+    </div>
 
     <!-- Вкладка 1: Товары -->
     <div id="tab-goods" class="page active">
@@ -144,7 +171,7 @@
     <div id="tab-profile" class="page">
         <h2 style="margin-bottom: 15px;">Мой профиль</h2>
         <div class="form-group">
-            <label class="form-label">ФИО Получателя (Фамилия Имя Отчество)</label>
+            <label class="form-label">ФИО Получателя</label>
             <input type="text" class="form-input" id="profName" placeholder="Иванов Иван Иванович" oninput="validateProfileInputs()">
             <span class="error-text" id="errName">Введите реальные ФИО (минимум 2 слова)</span>
         </div>
@@ -158,15 +185,19 @@
             <input type="text" class="form-input" id="profAddress" placeholder="Киев, Отделение №1" oninput="validateProfileInputs()">
             <span class="error-text" id="errAddress">Укажите город и отделение Новой Почты</span>
         </div>
-        <button class="btn-main" style="margin-top: 10px;" onclick="saveProfileManual()">Сохранить профиль</button>
+        
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button class="btn-main" style="flex: 1;" onclick="saveProfileManual(true)">Сохранить профиль</button>
+            <button class="btn-main" style="flex: 1; background: #2c2c2e; color: #fff; box-shadow: none;" onclick="openMyOrders()">Мои заказы</button>
+        </div>
 
         <div style="margin-top: 30px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-            <button class="subtle-btn" style="color: var(--text-dim);" onclick="openSupport()">💬 Техническая поддержка</button>
+            <button class="subtle-btn" style="color: var(--accent-green);" onclick="openSupport()">💬 Техническая поддержка</button>
             <button class="subtle-btn" onclick="openAdminLogin()">Админ-панель</button>
         </div>
     </div>
 
-    <!-- Модальное окно товара -->
+    <!-- Модальное окно просмотра товара -->
     <div class="modal" id="productModal">
         <span class="close-btn" onclick="closeModal('productModal')">&times;</span>
         <img id="modalImg" style="width:100%; height:220px; object-fit:cover; border-radius:16px; margin: 10px 0;">
@@ -182,7 +213,14 @@
         <button class="btn-main" onclick="addSelectedToCart()">В корзину</button>
     </div>
 
-    <!-- Модальное окно Оплаты (Apple / Google Pay) -->
+    <!-- Модальное окно "Мои Заказы" -->
+    <div class="modal" id="userOrdersModal">
+        <span class="close-btn" onclick="closeModal('userOrdersModal')">&times;</span>
+        <h2 style="margin-bottom: 15px;">Мои заказы</h2>
+        <div id="userOrdersList"></div>
+    </div>
+
+    <!-- Модальное окно Оплаты -->
     <div class="modal" id="payModal">
         <span class="close-btn" onclick="closeModal('payModal')">&times;</span>
         <h2 style="margin-bottom: 10px;">Выберите способ оплаты</h2>
@@ -206,25 +244,42 @@
         <button class="btn-main" onclick="checkAdminAuth()">Войти</button>
     </div>
 
-    <!-- Админ Панель (Управление товарами) -->
+    <!-- Админ Панель (Управление товарами и Заказами) -->
     <div class="modal" id="adminPanelModal">
         <span class="close-btn" onclick="closeModal('adminPanelModal')">&times;</span>
-        <h2 style="margin-bottom: 15px;">Редактор Товаров</h2>
+        <h2 style="margin-bottom: 15px;">Панель Администратора</h2>
         
-        <div class="glass" style="padding: 12px; margin-bottom: 15px;">
-            <h4 id="adminFormTitle" style="margin-bottom: 10px;">Добавить / Изменить товар</h4>
-            <input type="hidden" id="editProdId">
-            <input type="text" class="form-input" id="admName" placeholder="Название" style="margin-bottom: 8px;">
-            <input type="number" class="form-input" id="admPrice" placeholder="Цена (грн)" style="margin-bottom: 8px;">
-            <input type="number" class="form-input" id="admOldPrice" placeholder="Старая цена (если есть)" style="margin-bottom: 8px;">
-            <input type="text" class="form-input" id="admImg" placeholder="Ссылка на фото" style="margin-bottom: 8px;">
-            <input type="text" class="form-input" id="admDesc" placeholder="Описание" style="margin-bottom: 8px;">
-            <input type="text" class="form-input" id="admSizes" placeholder="Размеры через запятую (S,M,L)" style="margin-bottom: 8px;">
-            <button class="btn-main" onclick="saveProductAdmin()">Сохранить товар</button>
+        <div class="admin-tabs">
+            <button class="admin-tab-btn active" id="btnTabProds" onclick="switchAdminTab('prods')">Товары</button>
+            <button class="admin-tab-btn" id="btnTabOrders" onclick="switchAdminTab('orders')">Заказы</button>
         </div>
 
-        <h3>Список товаров</h3>
-        <div id="adminProductsList" style="margin-top: 10px;"></div>
+        <!-- Раздел Товаров -->
+        <div id="adminTabProdsContent">
+            <div class="glass" style="padding: 12px; margin-bottom: 15px;">
+                <h4 style="margin-bottom: 10px;">Добавить / Изменить товар</h4>
+                <input type="hidden" id="editProdId">
+                <input type="text" class="form-input" id="admName" placeholder="Название" style="margin-bottom: 8px;">
+                <input type="number" class="form-input" id="admPrice" placeholder="Цена (грн)" style="margin-bottom: 8px;">
+                <input type="number" class="form-input" id="admOldPrice" placeholder="Старая цена (если есть)" style="margin-bottom: 8px;">
+                
+                <label class="form-label">Загрузить фото с галереи:</label>
+                <input type="file" id="admFile" accept="image/*" class="form-input" style="margin-bottom: 8px;" onchange="handleFileSelect(event)">
+                <input type="hidden" id="admImg">
+
+                <input type="text" class="form-input" id="admDesc" placeholder="Описание" style="margin-bottom: 8px;">
+                <input type="text" class="form-input" id="admSizes" placeholder="Размеры через запятую (S, M, L)" style="margin-bottom: 8px;">
+                <button class="btn-main" onclick="saveProductAdmin()">Сохранить товар</button>
+            </div>
+
+            <h3>Лента товаров (Предпросмотр)</h3>
+            <div id="adminProductsList" class="products-grid" style="margin-top: 10px;"></div>
+        </div>
+
+        <!-- Раздел Заказов -->
+        <div id="adminTabOrdersContent" style="display: none;">
+            <div id="adminOrdersList"></div>
+        </div>
     </div>
 
     <!-- Навигация -->
@@ -245,6 +300,7 @@
             { id: 3, name: "Techwear Cargo Pants", price: 2100, oldPrice: 2500, img: "https://images.unsplash.com/photo-1517445312882-bc9910d016b7?w=400", desc: "Водоотталкивающая ткань с карманами.", sizes: ["M", "L"] }
         ];
 
+        let orders = JSON.parse(localStorage.getItem('storeOrders')) || [];
         let cart = [];
         let currentProduct = null;
         let selectedSize = null;
@@ -252,6 +308,14 @@
         function init() {
             renderProducts(products, 'productsGrid');
             loadProfile();
+        }
+
+        /* Анимация галочки */
+        function showSuccessToast(msg) {
+            document.getElementById('toastMessage').innerText = msg || 'Успешно';
+            const toast = document.getElementById('toastSuccess');
+            toast.classList.add('active');
+            setTimeout(() => { toast.classList.remove('active'); }, 1400);
         }
 
         function renderProducts(items, targetId) {
@@ -305,6 +369,7 @@
             if (!selectedSize) return;
             cart.push({ ...currentProduct, selectedSize });
             closeModal('productModal');
+            showSuccessToast("Добавлено в корзину");
         }
 
         function renderCart() {
@@ -334,7 +399,7 @@
 
         function removeFromCart(idx) { cart.splice(idx, 1); renderCart(); }
 
-        /* Валидация профиля */
+        /* Профиль и валидация */
         function isProfileValid() {
             const name = document.getElementById('profName').value.trim();
             const phone = document.getElementById('profPhone').value.trim();
@@ -353,7 +418,7 @@
 
         function validateProfileInputs() { isProfileValid(); }
 
-        function saveProfileManual() {
+        function saveProfileManual(showAnim = false) {
             if (isProfileValid()) {
                 const profile = {
                     name: document.getElementById('profName').value,
@@ -361,6 +426,7 @@
                     address: document.getElementById('profAddress').value
                 };
                 localStorage.setItem('userProfile', JSON.stringify(profile));
+                if (showAnim) showSuccessToast("Профиль сохранен");
             }
         }
 
@@ -376,12 +442,10 @@
 
         function proceedToCheckout() {
             if (cart.length === 0) return;
-            
             if (!isProfileValid()) {
                 switchTab('profile', document.querySelectorAll('.nav-item')[3]);
                 return;
             }
-
             saveProfileManual();
             const total = cart.reduce((sum, item) => sum + item.price, 0);
             document.getElementById('paySummaryText').innerText = `Сумма к оплате: ${total} грн`;
@@ -391,17 +455,65 @@
         function executePayment(method) {
             closeModal('payModal');
             const profile = JSON.parse(localStorage.getItem('userProfile'));
-            const orderData = {
-                cart: cart,
+            const newOrder = {
+                id: 'ORD-' + Math.floor(100000 + Math.random() * 900000),
+                date: Date.now(),
+                cart: [...cart],
                 profile: profile,
                 payMethod: method,
-                total: cart.reduce((sum, item) => sum + item.price, 0)
+                total: cart.reduce((sum, item) => sum + item.price, 0),
+                status: 'В обработке'
             };
-            tg.sendData(JSON.stringify(orderData));
+
+            orders.unshift(newOrder);
+            localStorage.setItem('storeOrders', JSON.stringify(orders));
+
+            tg.sendData(JSON.stringify(newOrder));
+            cart = [];
+            showSuccessToast("Заказ оформлен!");
+        }
+
+        /* Заказы покупателя */
+        function openMyOrders() {
+            const container = document.getElementById('userOrdersList');
+            if (orders.length === 0) {
+                container.innerHTML = "<p style='color:var(--text-dim); text-align:center;'>У вас нет активных заказов</p>";
+            } else {
+                const now = Date.now();
+                container.innerHTML = orders.map(o => {
+                    const isCancelable = (now - o.date) < 3600000 && o.status !== 'Отменен'; // Можно отменить в течение 1 часа
+                    return `
+                        <div class="glass" style="padding:14px; margin-bottom:12px;">
+                            <div style="display:flex; justify-shadow:space-between; justify-content:space-between; margin-bottom:6px;">
+                                <strong>#${o.id}</strong>
+                                <span style="color:var(--accent-green); font-weight:bold;">${o.status}</span>
+                            </div>
+                            <div style="font-size:13px; color:var(--text-dim); margin-bottom:8px;">
+                                ${o.cart.map(i => `${i.name} (${i.selectedSize})`).join(', ')}
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <strong style="color:var(--accent-green);">${o.total} грн</strong>
+                                ${isCancelable ? `<button class="subtle-btn" style="color:var(--danger);" onclick="cancelUserOrder('${o.id}')">Отменить заказ</button>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+            document.getElementById('userOrdersModal').classList.add('active');
+        }
+
+        function cancelUserOrder(orderId) {
+            const ord = orders.find(o => o.id === orderId);
+            if (ord) {
+                ord.status = 'Отменен';
+                localStorage.setItem('storeOrders', JSON.stringify(orders));
+                openMyOrders();
+                showSuccessToast("Заказ отменен");
+            }
         }
 
         /* Поддержка и Админка */
-        function openSupport() { tg.openTelegramLink("https://t.me/telegram"); }
+        function openSupport() { tg.openTelegramLink("https://t.me/Burimssdvvvv"); }
 
         function openAdminLogin() { document.getElementById('adminAuthModal').classList.add('active'); }
 
@@ -411,23 +523,82 @@
             if (l === 'admin' && p === '1234') {
                 closeModal('adminAuthModal');
                 renderAdminProducts();
+                renderAdminOrders();
                 document.getElementById('adminPanelModal').classList.add('active');
+            }
+        }
+
+        function switchAdminTab(tab) {
+            document.getElementById('btnTabProds').classList.toggle('active', tab === 'prods');
+            document.getElementById('btnTabOrders').classList.toggle('active', tab === 'orders');
+            document.getElementById('adminTabProdsContent').style.display = tab === 'prods' ? 'block' : 'none';
+            document.getElementById('adminTabOrdersContent').style.display = tab === 'orders' ? 'block' : 'none';
+        }
+
+        /* Фото с галереи */
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('admImg').value = e.target.result;
+                };
+                reader.readAsDataURL(file);
             }
         }
 
         function renderAdminProducts() {
             const container = document.getElementById('adminProductsList');
             container.innerHTML = products.map(p => `
-                <div class="glass" style="padding:10px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <strong>${p.name}</strong> - ${p.price} грн
-                    </div>
-                    <div>
-                        <button style="color:var(--accent-green); background:none; border:none; margin-right:8px;" onclick="editProductAdmin(${p.id})">✏️</button>
-                        <button style="color:var(--danger); background:none; border:none;" onclick="deleteProductAdmin(${p.id})">🗑</button>
+                <div class="product-card glass">
+                    <img src="${p.img}" class="product-img">
+                    <div class="product-title">${p.name}</div>
+                    <div class="product-price">${p.price} грн</div>
+                    <div style="margin-top:8px; display:flex; justify-content:space-between;">
+                        <button style="color:var(--accent-green); background:none; border:none;" onclick="editProductAdmin(${p.id})">✏️ Изменить</button>
+                        <button style="color:var(--danger); background:none; border:none;" onclick="deleteProductAdmin(${p.id})">🗑 Удалить</button>
                     </div>
                 </div>
             `).join('');
+        }
+
+        function renderAdminOrders() {
+            const container = document.getElementById('adminOrdersList');
+            if (orders.length === 0) {
+                container.innerHTML = "<p style='color:var(--text-dim); text-align:center;'>Заказов нет</p>";
+                return;
+            }
+            container.innerHTML = orders.map(o => `
+                <div class="glass" style="padding:12px; margin-bottom:12px;">
+                    <div style="display:flex; justify-content:space-between;">
+                        <strong>#${o.id}</strong>
+                        <span style="color:var(--accent-green); font-weight:bold;">${o.status}</span>
+                    </div>
+                    <div style="font-size:12px; color:var(--text-dim); margin:6px 0;">
+                        Клиент: ${o.profile.name} (${o.profile.phone})<br>
+                        Адрес: ${o.profile.address}<br>
+                        Оплата: ${o.payMethod} | Итого: ${o.total} грн
+                    </div>
+                    <div style="font-size:12px; margin-bottom:8px;">
+                        <strong>Товары:</strong> ${o.cart.map(i => `${i.name} [${i.selectedSize}]`).join(', ')}
+                    </div>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        <button class="subtle-btn" style="color:var(--accent-green);" onclick="changeOrderStatus('${o.id}', 'Принят')">Принять</button>
+                        <button class="subtle-btn" style="color:#60efff;" onclick="changeOrderStatus('${o.id}', 'Отправлен')">Отправлен</button>
+                        <button class="subtle-btn" style="color:var(--accent-green);" onclick="changeOrderStatus('${o.id}', 'Доставлен')">Доставлен</button>
+                        <button class="subtle-btn" style="color:var(--danger);" onclick="changeOrderStatus('${o.id}', 'Отменен')">Отменить</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function changeOrderStatus(orderId, newStatus) {
+            const ord = orders.find(o => o.id === orderId);
+            if (ord) {
+                ord.status = newStatus;
+                localStorage.setItem('storeOrders', JSON.stringify(orders));
+                renderAdminOrders();
+            }
         }
 
         function saveProductAdmin() {
@@ -445,7 +616,7 @@
                 const prod = products.find(p => p.id == id);
                 Object.assign(prod, { name, price, oldPrice, img, desc, sizes });
             } else {
-                products.push({ id: Date.now(), name, price, oldPrice, img, desc, sizes });
+                products.push({ id: Date.now(), name, price, oldPrice, img: img || "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=400", desc, sizes });
             }
 
             localStorage.setItem('storeProducts', JSON.stringify(products));
@@ -459,6 +630,7 @@
             document.getElementById('admImg').value = '';
             document.getElementById('admDesc').value = '';
             document.getElementById('admSizes').value = '';
+            showSuccessToast("Товар сохранен");
         }
 
         function editProductAdmin(id) {
@@ -477,6 +649,7 @@
             localStorage.setItem('storeProducts', JSON.stringify(products));
             renderProducts(products, 'productsGrid');
             renderAdminProducts();
+            showSuccessToast("Удалено");
         }
 
         function filterGoods() {
