@@ -2,134 +2,197 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Streetwear Store</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Store Glass iOS</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-        body { background-color: var(--tg-theme-bg-color, #121212); color: var(--tg-theme-text-color, #ffffff); padding: 15px; padding-bottom: 90px; }
-        h1 { font-size: 22px; margin-bottom: 15px; text-align: center; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
-        
-        .products-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .product-card { background: #1e1e1e; border-radius: 12px; padding: 10px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid #2a2a2a; }
-        .product-img { width: 100%; height: 130px; object-fit: cover; border-radius: 8px; margin-bottom: 8px; }
-        .product-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
-        .product-price { font-size: 15px; font-weight: 700; color: #40a7e3; margin-bottom: 8px; }
-        
-        .size-selector { display: flex; gap: 4px; margin-bottom: 8px; }
-        .size-btn { flex: 1; padding: 4px 0; background: #2a2a2a; border: 1px solid #333; color: #fff; border-radius: 4px; font-size: 11px; cursor: pointer; text-align: center; }
-        .size-btn.active { background: #40a7e3; border-color: #40a7e3; font-weight: bold; }
-        
-        .add-btn { width: 100%; background: #40a7e3; color: white; border: none; padding: 8px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; }
-        .add-btn:active { opacity: 0.8; }
-        
-        .cart-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1e1e1e; padding: 12px 15px; border-top: 1px solid #2a2a2a; display: flex; justify-content: space-between; align-items: center; }
-        .cart-info { font-size: 14px; font-weight: 600; }
-        .checkout-btn { background: #31b545; color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; }
+        :root {
+            --bg-color: #121212;
+            --card-bg: rgba(30, 30, 30, 0.75);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --accent-green: #00ff87;
+            --accent-glow: rgba(0, 255, 135, 0.35);
+            --text-color: #f5f5f7;
+            --text-dim: #a1a1a6;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-color); color: var(--text-color); padding-bottom: 90px; overflow-x: hidden; }
+
+        /* Эффект жидкого стекла (Glassmorphism) */
+        .glass {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+        }
+
+        /* Поиск и Фильтры */
+        .header-search { padding: 15px; position: sticky; top: 0; z-index: 10; background: rgba(18, 18, 18, 0.85); backdrop-filter: blur(15px); }
+        .search-box { display: flex; gap: 10px; }
+        .search-input { flex: 1; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 14px; padding: 10px 15px; color: #fff; font-size: 15px; outline: none; transition: 0.3s; }
+        .search-input:focus { border-color: var(--accent-green); box-shadow: 0 0 12px var(--accent-glow); }
+        .filter-btn { background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 14px; padding: 0 15px; color: var(--accent-green); font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .filter-btn:active { scale: 0.95; }
+
+        /* Сетка товаров */
+        .products-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 0 15px; }
+        .product-card {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            position: relative;
+        }
+        .product-card:hover, .product-card:active {
+            border-color: var(--accent-green);
+            box-shadow: 0 0 20px var(--accent-glow);
+            transform: translateY(-2px);
+        }
+        .product-img { width: 100%; height: 140px; object-fit: cover; border-radius: 14px; margin-bottom: 10px; }
+        .product-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; line-height: 1.2; }
+        .product-price { font-size: 16px; font-weight: 700; color: var(--accent-green); margin-bottom: 8px; }
+
+        /* Нижнее меню iOS */
+        .nav-bar {
+            position: fixed;
+            bottom: 15px;
+            left: 15px;
+            right: 15px;
+            height: 65px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 100;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text-dim); font-size: 11px; cursor: pointer; transition: 0.2s; }
+        .nav-item.active { color: var(--accent-green); font-weight: 600; }
+        .nav-icon { font-size: 20px; }
+
+        /* Экран детального просмотра товара (Модальное окно) */
+        .modal {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(25px);
+            z-index: 200;
+            display: none;
+            flex-direction: column;
+            padding: 20px;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease-out;
+        }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        .close-btn { align-self: flex-end; font-size: 24px; color: var(--text-dim); cursor: pointer; padding: 5px; }
+        .sizes-row { display: flex; gap: 8px; margin: 15px 0; }
+        .size-chip { padding: 8px 16px; background: #2c2c2e; border-radius: 10px; font-size: 13px; cursor: pointer; border: 1px solid transparent; }
+        .size-chip.active { border-color: var(--accent-green); background: rgba(0, 255, 135, 0.15); color: var(--accent-green); font-weight: bold; }
+        .size-chip.disabled { opacity: 0.3; text-decoration: line-through; cursor: not-allowed; }
+
+        .add-to-cart-btn {
+            background: linear-gradient(135deg, #00ff87, #60efff);
+            color: #000;
+            font-weight: 700;
+            border: none;
+            padding: 16px;
+            border-radius: 16px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: auto;
+            box-shadow: 0 0 20px var(--accent-glow);
+            transition: 0.2s;
+        }
+        .add-to-cart-btn:active { scale: 0.98; }
     </style>
 </head>
 <body>
 
-    <h1>STREETWEAR STORE</h1>
-
-    <div class="products-grid">
-        <!-- Товар 1 -->
-        <div class="product-card">
-            <img src="https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=400" class="product-img" alt="Худи">
-            <div class="product-title">Oversize Худи Black</div>
-            <div class="product-price">1 800 грн</div>
-            <div class="size-selector" id="sizes-1">
-                <button class="size-btn active" onclick="selectSize(1, 'M', this)">M</button>
-                <button class="size-btn" onclick="selectSize(1, 'L', this)">L</button>
-                <button class="size-btn" onclick="selectSize(1, 'XL', this)">XL</button>
-            </div>
-            <button class="add-btn" onclick="addToCart('Oversize Худи Black', 1800, 1)">В корзину</button>
-        </div>
-
-        <!-- Товар 2 -->
-        <div class="product-card">
-            <img src="https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=400" class="product-img" alt="Футболка">
-            <div class="product-title">Футболка Basic White</div>
-            <div class="product-price">850 грн</div>
-            <div class="size-selector" id="sizes-2">
-                <button class="size-btn active" onclick="selectSize(2, 'M', this)">M</button>
-                <button class="size-btn" onclick="selectSize(2, 'L', this)">L</button>
-                <button class="size-btn" onclick="selectSize(2, 'XL', this)">XL</button>
-            </div>
-            <button class="add-btn" onclick="addToCart('Футболка Basic White', 850, 2)">В корзину</button>
-        </div>
-
-        <!-- Товар 3 -->
-        <div class="product-card">
-            <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400" class="product-img" alt="Кроссовки">
-            <div class="product-title">Кроссовки Red Style</div>
-            <div class="product-price">3 200 грн</div>
-            <div class="size-selector" id="sizes-3">
-                <button class="size-btn active" onclick="selectSize(3, '41', this)">41</button>
-                <button class="size-btn" onclick="selectSize(3, '42', this)">42</button>
-                <button class="size-btn" onclick="selectSize(3, '43', this)">43</button>
-            </div>
-            <button class="add-btn" onclick="addToCart('Кроссовки Red Style', 3200, 3)">В корзину</button>
-        </div>
-
-        <!-- Товар 4 -->
-        <div class="product-card">
-            <img src="https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400" class="product-img" alt="Свитшот">
-            <div class="product-title">Свитшот Techwear Grey</div>
-            <div class="product-price">1 500 грн</div>
-            <div class="size-selector" id="sizes-4">
-                <button class="size-btn active" onclick="selectSize(4, 'M', this)">M</button>
-                <button class="size-btn" onclick="selectSize(4, 'L', this)">L</button>
-                <button class="size-btn" onclick="selectSize(4, 'XL', this)">XL</button>
-            </div>
-            <button class="add-btn" onclick="addToCart('Свитшот Techwear Grey', 1500, 4)">В корзину</button>
+    <!-- Шапка поиска -->
+    <div class="header-search">
+        <div class="search-box">
+            <input type="text" class="search-input" placeholder="Поиск товаров..." id="searchInput">
+            <button class="filter-btn" onclick="openFilters()">Фильтры</button>
         </div>
     </div>
 
-    <!-- Панель корзины снизу -->
-    <div class="cart-bar">
-        <div class="cart-info">Товаров: <span id="cart-count">0</span> | <span id="cart-total">0</span> грн</div>
-        <button class="checkout-btn" onclick="sendOrder()">Заказать</button>
+    <!-- Каталог товаров -->
+    <div class="products-grid" id="productsGrid">
+        <!-- Пример карточки 1 -->
+        <div class="product-card glass" onclick="openProduct(1)">
+            <img src="https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=400" class="product-img">
+            <div class="product-title">Oversize Black Hoodie</div>
+            <div class="product-price">1 800 грн</div>
+        </div>
+        <!-- Пример карточки 2 -->
+        <div class="product-card glass" onclick="openProduct(2)">
+            <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400" class="product-img">
+            <div class="product-title">Nike Air Max Red</div>
+            <div class="product-price">3 200 грн</div>
+        </div>
+    </div>
+
+    <!-- Модальный экран товара -->
+    <div class="modal" id="productModal">
+        <span class="close-btn" onclick="closeProduct()">&times;</span>
+        <img src="" id="modalImg" style="width:100%; height:250px; object-fit:cover; border-radius:18px; margin-bottom:15px;">
+        <h2 id="modalTitle" style="font-size:20px; margin-bottom:8px;"></h2>
+        <div id="modalPrice" style="font-size:22px; color:var(--accent-green); font-weight:bold; margin-bottom:12px;"></div>
+        <p id="modalDesc" style="color:var(--text-dim); font-size:14px; line-height:1.4; margin-bottom:15px;">Премиальный хлопок, свободный крой, фирменный вышитый логотип на груди.</p>
+        
+        <div style="font-size:14px; font-weight:600;">Выберите размер:</div>
+        <div class="sizes-row" id="sizesRow">
+            <div class="size-chip active">S</div>
+            <div class="size-chip">M</div>
+            <div class="size-chip disabled">L (Нет)</div>
+            <div class="size-chip">XL</div>
+        </div>
+
+        <button class="add-to-cart-btn">Добавить в корзину</button>
+    </div>
+
+    <!-- Нижняя навигация iOS -->
+    <div class="nav-bar glass">
+        <div class="nav-item active" onclick="switchTab('goods')">
+            <span class="nav-icon">🛍</span>
+            <span>Товары</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('search')">
+            <span class="nav-icon">🔍</span>
+            <span>Поиск</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('cart')">
+            <span class="nav-icon">🛒</span>
+            <span>Корзина</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('profile')">
+            <span class="nav-icon">👤</span>
+            <span>Профиль</span>
+        </div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.expand(); // Раскрываем приложение на весь экран
+        tg.expand();
 
-        let cart = [];
-        let selectedSizes = { 1: 'M', 2: 'M', 3: '41', 4: 'M' };
-
-        function selectSize(productId, size, btn) {
-            selectedSizes[productId] = size;
-            const parent = document.getElementById(`sizes-${productId}`);
-            parent.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+        function switchTab(tab) {
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
         }
 
-        function addToCart(title, price, productId) {
-            const size = selectedSizes[productId];
-            cart.push({ title, price, size });
-            updateCartUI();
+        function openProduct(id) {
+            document.getElementById('modalImg').src = id === 1 
+                ? "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=400" 
+                : "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400";
+            document.getElementById('modalTitle').innerText = id === 1 ? "Oversize Black Hoodie" : "Nike Air Max Red";
+            document.getElementById('modalPrice').innerText = id === 1 ? "1 800 грн" : "3 200 грн";
+            document.getElementById('productModal').style.display = 'flex';
         }
 
-        function updateCartUI() {
-            document.getElementById('cart-count').innerText = cart.length;
-            const total = cart.reduce((sum, item) => sum + item.price, 0);
-            document.getElementById('cart-total').innerText = total;
-        }
-
-        function sendOrder() {
-            if (cart.length === 0) {
-                tg.showAlert("Ваша корзина пуста!");
-                return;
-            }
-            const total = cart.reduce((sum, item) => sum + item.price, 0);
-            const orderData = {
-                items: cart,
-                total: total
-            };
-            // Отправляем данные заказа обратно боту
-            tg.sendData(JSON.stringify(orderData));
+        function closeProduct() {
+            document.getElementById('productModal').style.display = 'none';
         }
     </script>
 </body>
