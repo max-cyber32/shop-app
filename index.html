@@ -3,197 +3,291 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Store Glass iOS</title>
+    <title>Liquid Glass Store 2.0</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
             --bg-color: #121212;
-            --card-bg: rgba(30, 30, 30, 0.75);
+            --card-bg: rgba(28, 28, 30, 0.75);
             --card-border: rgba(255, 255, 255, 0.08);
             --accent-green: #00ff87;
-            --accent-glow: rgba(0, 255, 135, 0.35);
-            --text-color: #f5f5f7;
-            --text-dim: #a1a1a6;
+            --accent-glow: rgba(0, 255, 135, 0.3);
+            --text-main: #f5f5f7;
+            --text-dim: #8e8e93;
+            --danger: #ff453a;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background-color: var(--bg-color); color: var(--text-color); padding-bottom: 90px; overflow-x: hidden; }
+        body { background-color: var(--bg-color); color: var(--text-main); padding-bottom: 90px; }
 
-        /* Эффект жидкого стекла (Glassmorphism) */
         .glass {
             background: var(--card-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
             border: 1px solid var(--card-border);
             border-radius: 20px;
         }
 
-        /* Поиск и Фильтры */
-        .header-search { padding: 15px; position: sticky; top: 0; z-index: 10; background: rgba(18, 18, 18, 0.85); backdrop-filter: blur(15px); }
-        .search-box { display: flex; gap: 10px; }
-        .search-input { flex: 1; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 14px; padding: 10px 15px; color: #fff; font-size: 15px; outline: none; transition: 0.3s; }
-        .search-input:focus { border-color: var(--accent-green); box-shadow: 0 0 12px var(--accent-glow); }
-        .filter-btn { background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 14px; padding: 0 15px; color: var(--accent-green); font-weight: 600; cursor: pointer; transition: 0.2s; }
-        .filter-btn:active { scale: 0.95; }
+        /* Страницы */
+        .page { display: none; padding: 15px; animation: fadeIn 0.25s ease-in-out; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Поиск и шапка */
+        .header-search { display: flex; gap: 10px; margin-bottom: 15px; }
+        .search-input { flex: 1; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 14px; padding: 12px 15px; color: #fff; font-size: 15px; outline: none; }
+        .search-input:focus { border-color: var(--accent-green); box-shadow: 0 0 10px var(--accent-glow); }
+        .filter-btn { background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 14px; padding: 0 15px; color: var(--accent-green); font-weight: 600; cursor: pointer; }
 
         /* Сетка товаров */
-        .products-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 0 15px; }
-        .product-card {
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-            position: relative;
-        }
-        .product-card:hover, .product-card:active {
-            border-color: var(--accent-green);
-            box-shadow: 0 0 20px var(--accent-glow);
-            transform: translateY(-2px);
-        }
-        .product-img { width: 100%; height: 140px; object-fit: cover; border-radius: 14px; margin-bottom: 10px; }
-        .product-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; line-height: 1.2; }
-        .product-price { font-size: 16px; font-weight: 700; color: var(--accent-green); margin-bottom: 8px; }
+        .products-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .product-card { padding: 12px; display: flex; flex-direction: column; cursor: pointer; transition: 0.2s; }
+        .product-card:active { transform: scale(0.97); border-color: var(--accent-green); }
+        .product-img { width: 100%; height: 140px; object-fit: cover; border-radius: 14px; margin-bottom: 8px; }
+        .product-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .product-price { font-size: 15px; font-weight: 700; color: var(--accent-green); }
 
-        /* Нижнее меню iOS */
-        .nav-bar {
-            position: fixed;
-            bottom: 15px;
-            left: 15px;
-            right: 15px;
-            height: 65px;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            z-index: 100;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-        }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text-dim); font-size: 11px; cursor: pointer; transition: 0.2s; }
-        .nav-item.active { color: var(--accent-green); font-weight: 600; }
-        .nav-icon { font-size: 20px; }
-
-        /* Экран детального просмотра товара (Модальное окно) */
-        .modal {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(25px);
-            z-index: 200;
-            display: none;
-            flex-direction: column;
-            padding: 20px;
-            overflow-y: auto;
-            animation: slideUp 0.3s ease-out;
-        }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-
-        .close-btn { align-self: flex-end; font-size: 24px; color: var(--text-dim); cursor: pointer; padding: 5px; }
+        /* Модальное окно товара */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(20px); z-index: 200; display: none; flex-direction: column; padding: 20px; overflow-y: auto; }
+        .modal.active { display: flex; }
+        .close-btn { align-self: flex-end; font-size: 26px; color: var(--text-dim); cursor: pointer; }
+        
         .sizes-row { display: flex; gap: 8px; margin: 15px 0; }
-        .size-chip { padding: 8px 16px; background: #2c2c2e; border-radius: 10px; font-size: 13px; cursor: pointer; border: 1px solid transparent; }
+        .size-chip { padding: 10px 16px; background: #2c2c2e; border-radius: 12px; font-size: 14px; cursor: pointer; border: 1px solid transparent; }
         .size-chip.active { border-color: var(--accent-green); background: rgba(0, 255, 135, 0.15); color: var(--accent-green); font-weight: bold; }
         .size-chip.disabled { opacity: 0.3; text-decoration: line-through; cursor: not-allowed; }
 
-        .add-to-cart-btn {
-            background: linear-gradient(135deg, #00ff87, #60efff);
-            color: #000;
-            font-weight: 700;
-            border: none;
-            padding: 16px;
-            border-radius: 16px;
-            font-size: 16px;
-            cursor: pointer;
-            margin-top: auto;
-            box-shadow: 0 0 20px var(--accent-glow);
-            transition: 0.2s;
-        }
-        .add-to-cart-btn:active { scale: 0.98; }
+        .btn-main { background: linear-gradient(135deg, #00ff87, #60efff); color: #000; font-weight: 700; border: none; padding: 16px; border-radius: 16px; font-size: 16px; cursor: pointer; width: 100%; box-shadow: 0 0 15px var(--accent-glow); }
+        .btn-main:active { opacity: 0.8; }
+
+        /* Элементы корзины */
+        .cart-item { display: flex; align-items: center; justify-content: space-between; padding: 12px; margin-bottom: 10px; }
+        .cart-item-info { display: flex; flex-direction: column; gap: 4px; }
+        .remove-btn { color: var(--danger); font-size: 13px; cursor: pointer; margin-top: 4px; }
+
+        /* Поля формы в профиле */
+        .form-group { margin-bottom: 12px; }
+        .form-label { font-size: 12px; color: var(--text-dim); margin-bottom: 4px; display: block; }
+        .form-input { width: 100%; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 12px; padding: 12px; color: #fff; font-size: 14px; outline: none; }
+
+        /* Нижнее меню */
+        .nav-bar { position: fixed; bottom: 12px; left: 12px; right: 12px; height: 65px; display: flex; justify-content: space-around; align-items: center; z-index: 100; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; color: var(--text-dim); font-size: 11px; cursor: pointer; }
+        .nav-item.active { color: var(--accent-green); font-weight: 600; }
     </style>
 </head>
 <body>
 
-    <!-- Шапка поиска -->
-    <div class="header-search">
-        <div class="search-box">
-            <input type="text" class="search-input" placeholder="Поиск товаров..." id="searchInput">
-            <button class="filter-btn" onclick="openFilters()">Фильтры</button>
+    <!-- Вкладка 1: Товары -->
+    <div id="tab-goods" class="page active">
+        <div class="header-search">
+            <input type="text" class="search-input" placeholder="Поиск вещей..." id="searchInput" oninput="filterGoods()">
+            <button class="filter-btn" onclick="alert('Фильтры: По цене, По размеру')">⚙️</button>
         </div>
+        <div class="products-grid" id="productsGrid"></div>
     </div>
 
-    <!-- Каталог товаров -->
-    <div class="products-grid" id="productsGrid">
-        <!-- Пример карточки 1 -->
-        <div class="product-card glass" onclick="openProduct(1)">
-            <img src="https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=400" class="product-img">
-            <div class="product-title">Oversize Black Hoodie</div>
-            <div class="product-price">1 800 грн</div>
-        </div>
-        <!-- Пример карточки 2 -->
-        <div class="product-card glass" onclick="openProduct(2)">
-            <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400" class="product-img">
-            <div class="product-title">Nike Air Max Red</div>
-            <div class="product-price">3 200 грн</div>
-        </div>
+    <!-- Вкладка 2: Поиск -->
+    <div id="tab-search" class="page">
+        <h2 style="margin-bottom: 15px;">Быстрый поиск</h2>
+        <input type="text" class="search-input" placeholder="Введите название (например, Худи)" style="width: 100%; margin-bottom: 15px;" oninput="searchCatalog(this.value)">
+        <div id="searchResults" class="products-grid"></div>
     </div>
 
-    <!-- Модальный экран товара -->
+    <!-- Вкладка 3: Корзина -->
+    <div id="tab-cart" class="page">
+        <h2 style="margin-bottom: 15px;">Корзина</h2>
+        <div id="cartList"></div>
+        <div id="cartSummary" style="margin-top: 15px; font-size: 18px; font-weight: bold; text-align: right;">Итого: 0 грн</div>
+        <button class="btn-main" style="margin-top: 15px;" onclick="checkout()">Оформить заказ</button>
+    </div>
+
+    <!-- Вкладка 4: Профиль -->
+    <div id="tab-profile" class="page">
+        <h2 style="margin-bottom: 15px;">Мой профиль</h2>
+        <div class="form-group">
+            <label class="form-label">ФИО Получателя</label>
+            <input type="text" class="form-input" id="profName" placeholder="Иванов Иван">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Номер телефона</label>
+            <input type="tel" class="form-input" id="profPhone" placeholder="+380XXXXXXXXX">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Город и № Новой Почты</label>
+            <input type="text" class="form-input" id="profAddress" placeholder="Киев, Отделение №1">
+        </div>
+        <button class="btn-main" onclick="saveProfile()">Сохранить профиль</button>
+    </div>
+
+    <!-- Модальное окно просмотра товара -->
     <div class="modal" id="productModal">
-        <span class="close-btn" onclick="closeProduct()">&times;</span>
-        <img src="" id="modalImg" style="width:100%; height:250px; object-fit:cover; border-radius:18px; margin-bottom:15px;">
-        <h2 id="modalTitle" style="font-size:20px; margin-bottom:8px;"></h2>
-        <div id="modalPrice" style="font-size:22px; color:var(--accent-green); font-weight:bold; margin-bottom:12px;"></div>
-        <p id="modalDesc" style="color:var(--text-dim); font-size:14px; line-height:1.4; margin-bottom:15px;">Премиальный хлопок, свободный крой, фирменный вышитый логотип на груди.</p>
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <img id="modalImg" style="width:100%; height:220px; object-fit:cover; border-radius:16px; margin: 10px 0;">
+        <h2 id="modalTitle"></h2>
+        <div id="modalPrice" style="color:var(--accent-green); font-size:20px; font-weight:bold; margin: 5px 0;"></div>
+        <p id="modalDesc" style="color:var(--text-dim); font-size:13px; margin-bottom: 15px;"></p>
         
-        <div style="font-size:14px; font-weight:600;">Выберите размер:</div>
-        <div class="sizes-row" id="sizesRow">
-            <div class="size-chip active">S</div>
-            <div class="size-chip">M</div>
-            <div class="size-chip disabled">L (Нет)</div>
-            <div class="size-chip">XL</div>
-        </div>
-
-        <button class="add-to-cart-btn">Добавить в корзину</button>
+        <div style="font-size:13px; font-weight:600;">Выбор размера:</div>
+        <div class="sizes-row" id="modalSizes"></div>
+        <button class="btn-main" onclick="addSelectedToCart()">В корзину</button>
     </div>
 
-    <!-- Нижняя навигация iOS -->
+    <!-- Навигация -->
     <div class="nav-bar glass">
-        <div class="nav-item active" onclick="switchTab('goods')">
-            <span class="nav-icon">🛍</span>
-            <span>Товары</span>
-        </div>
-        <div class="nav-item" onclick="switchTab('search')">
-            <span class="nav-icon">🔍</span>
-            <span>Поиск</span>
-        </div>
-        <div class="nav-item" onclick="switchTab('cart')">
-            <span class="nav-icon">🛒</span>
-            <span>Корзина</span>
-        </div>
-        <div class="nav-item" onclick="switchTab('profile')">
-            <span class="nav-icon">👤</span>
-            <span>Профиль</span>
-        </div>
+        <div class="nav-item active" onclick="switchTab('goods', this)"><span>🛍</span><span>Товары</span></div>
+        <div class="nav-item" onclick="switchTab('search', this)"><span>🔍</span><span>Поиск</span></div>
+        <div class="nav-item" onclick="switchTab('cart', this)"><span>🛒</span><span>Корзина</span></div>
+        <div class="nav-item" onclick="switchTab('profile', this)"><span>👤</span><span>Профиль</span></div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        function switchTab(tab) {
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            event.currentTarget.classList.add('active');
+        // База товаров (симуляция)
+        const products = [
+            { id: 1, name: "Oversize Black Hoodie", price: 1800, img: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=400", desc: "100% Плотный хлопок. Оверсайз крой.", sizes: { "S": true, "M": true, "L": false, "XL": true } },
+            { id: 2, name: "Nike Air Max Red", price: 3200, img: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400", desc: "Премиум кроссовки с амортизацией.", sizes: { "41": true, "42": false, "43": true } },
+            { id: 3, name: "Techwear Cargo Pants", price: 2100, img: "https://images.unsplash.com/photo-1517445312882-bc9910d016b7?w=400", desc: "Водоотталкивающая ткань с карманами.", sizes: { "M": true, "L": true, "XL": false } }
+        ];
+
+        let cart = [];
+        let currentProduct = null;
+        let selectedSize = null;
+
+        // Инициализация
+        function init() {
+            renderProducts(products, 'productsGrid');
+            loadProfile();
+        }
+
+        function renderProducts(items, targetId) {
+            const grid = document.getElementById(targetId);
+            grid.innerHTML = items.map(p => `
+                <div class="product-card glass" onclick="openProduct(${p.id})">
+                    <img src="${p.img}" class="product-img">
+                    <div class="product-title">${p.name}</div>
+                    <div class="product-price">${p.price} грн</div>
+                </div>
+            `).join('');
+        }
+
+        function switchTab(tabId, el) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+            el.classList.add('active');
+            if (tabId === 'cart') renderCart();
         }
 
         function openProduct(id) {
-            document.getElementById('modalImg').src = id === 1 
-                ? "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=400" 
-                : "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400";
-            document.getElementById('modalTitle').innerText = id === 1 ? "Oversize Black Hoodie" : "Nike Air Max Red";
-            document.getElementById('modalPrice').innerText = id === 1 ? "1 800 грн" : "3 200 грн";
-            document.getElementById('productModal').style.display = 'flex';
+            currentProduct = products.find(p => p.id === id);
+            document.getElementById('modalImg').src = currentProduct.img;
+            document.getElementById('modalTitle').innerText = currentProduct.name;
+            document.getElementById('modalPrice').innerText = `${currentProduct.price} грн`;
+            document.getElementById('modalDesc').innerText = currentProduct.desc;
+
+            const sizesContainer = document.getElementById('modalSizes');
+            sizesContainer.innerHTML = Object.entries(currentProduct.sizes).map(([size, available]) => {
+                if (available) {
+                    return `<div class="size-chip" onclick="selectSize('${size}', this)">${size}</div>`;
+                } else {
+                    return `<div class="size-chip disabled">${size} (Нет)</div>`;
+                }
+            }).join('');
+
+            selectedSize = null;
+            document.getElementById('productModal').classList.add('active');
         }
 
-        function closeProduct() {
-            document.getElementById('productModal').style.display = 'none';
+        function closeModal() { document.getElementById('productModal').classList.remove('active'); }
+
+        function selectSize(size, el) {
+            document.querySelectorAll('.size-chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            selectedSize = size;
         }
+
+        function addSelectedToCart() {
+            if (!selectedSize) { tg.showAlert("Выберите доступный размер!"); return; }
+            cart.push({ ...currentProduct, selectedSize });
+            closeModal();
+            tg.showAlert(`Добавлено в корзину: ${currentProduct.name} (${selectedSize})`);
+        }
+
+        function renderCart() {
+            const list = document.getElementById('cartList');
+            if (cart.length === 0) {
+                list.innerHTML = "<p style='color:var(--text-dim);'>Корзина пуста</p>";
+                document.getElementById('cartSummary').innerText = "Итого: 0 грн";
+                return;
+            }
+
+            let total = 0;
+            list.innerHTML = cart.map((item, idx) => {
+                total += item.price;
+                return `
+                    <div class="cart-item glass">
+                        <div class="cart-item-info">
+                            <strong>${item.name}</strong>
+                            <span style="font-size:12px; color:var(--text-dim);">Размер: ${item.selectedSize}</span>
+                            <span style="color:var(--accent-green); font-weight:bold;">${item.price} грн</span>
+                        </div>
+                        <div class="remove-btn" onclick="removeFromCart(${idx})">Удалить</div>
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('cartSummary').innerText = `Итого: ${total} грн`;
+        }
+
+        function removeFromCart(idx) { cart.splice(idx, 1); renderCart(); }
+
+        function saveProfile() {
+            const profile = {
+                name: document.getElementById('profName').value,
+                phone: document.getElementById('profPhone').value,
+                address: document.getElementById('profAddress').value
+            };
+            localStorage.setItem('userProfile', JSON.stringify(profile));
+            tg.showAlert("Данные сохранены!");
+        }
+
+        function loadProfile() {
+            const saved = localStorage.getItem('userProfile');
+            if (saved) {
+                const profile = JSON.parse(saved);
+                document.getElementById('profName').value = profile.name || '';
+                document.getElementById('profPhone').value = profile.phone || '';
+                document.getElementById('profAddress').value = profile.address || '';
+            }
+        }
+
+        function checkout() {
+            if (cart.length === 0) { tg.showAlert("Корзина пуста!"); return; }
+            const profile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+            
+            const orderData = {
+                cart: cart,
+                profile: profile,
+                total: cart.reduce((sum, item) => sum + item.price, 0)
+            };
+
+            tg.sendData(JSON.stringify(orderData));
+        }
+
+        function filterGoods() {
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = products.filter(p => p.name.toLowerCase().includes(q));
+            renderProducts(filtered, 'productsGrid');
+        }
+
+        function searchCatalog(val) {
+            const filtered = products.filter(p => p.name.toLowerCase().includes(val.toLowerCase()));
+            renderProducts(filtered, 'searchResults');
+        }
+
+        init();
     </script>
 </body>
 </html>
