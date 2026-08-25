@@ -3,211 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Liquid Glass Store 2.0</title>
+    <title>Liquid Glass Store</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --bg-color: #121212;
-            --card-bg: rgba(28, 28, 30, 0.75);
-            --card-border: rgba(255, 255, 255, 0.08);
+            --bg-color: #0d0d0e;
+            --card-bg: rgba(28, 28, 30, 0.65);
+            --card-border: rgba(255, 255, 255, 0.07);
             --accent-green: #00ff87;
-            --accent-glow: rgba(0, 255, 135, 0.35);
+            --accent-glow: rgba(0, 255, 135, 0.25);
             --text-main: #f5f5f7;
             --text-dim: #8e8e93;
             --danger: #ff453a;
         }
 
-        * { 
-            box-sizing: border-box; 
-            margin: 0; 
-            padding: 0; 
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; 
-            -webkit-tap-highlight-color: transparent; 
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-color); color: var(--text-main); padding-bottom: 90px; overflow-x: hidden; }
 
-        body { 
-            background-color: var(--bg-color); 
-            color: var(--text-main); 
-            padding-bottom: 90px; 
-            overflow-x: hidden;
-        }
-
-        /* Эффект жидкого стекла */
         .glass {
             background: var(--card-bg);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
             border: 1px solid var(--card-border);
-            border-radius: 20px;
+            border-radius: 22px;
         }
 
-        /* Страницы с ультра-плавной анимацией */
+        /* Плавные расслабляющие анимации */
         .page { 
             display: none; 
-            padding: 15px; 
+            padding: 16px; 
             opacity: 0;
-            transform: scale(0.97) translateY(8px);
-            transition: opacity 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+            transform: translateY(10px) scale(0.99);
+            transition: opacity 0.45s ease-out, transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .page.active { 
             display: block; 
             opacity: 1;
-            transform: scale(1) translateY(0);
+            transform: translateY(0) scale(1);
         }
 
-        /* Шапка и поиск */
-        .header-search { display: flex; gap: 10px; margin-bottom: 15px; }
+        /* Поиск и фильтр */
+        .header-search { display: flex; gap: 10px; margin-bottom: 16px; }
         .search-input { 
-            flex: 1; 
-            background: #1c1c1e; 
-            border: 1px solid #2c2c2e; 
-            border-radius: 14px; 
-            padding: 12px 15px; 
-            color: #fff; 
-            font-size: 15px; 
-            outline: none; 
-            transition: border-color 0.3s, box-shadow 0.3s;
+            flex: 1; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 14px; 
+            padding: 12px 16px; color: #fff; font-size: 15px; outline: none; transition: border-color 0.3s;
         }
-        .search-input:focus { 
-            border-color: var(--accent-green); 
-            box-shadow: 0 0 12px var(--accent-glow); 
-        }
-        .filter-btn { 
-            background: #1c1c1e; 
-            border: 1px solid #2c2c2e; 
-            border-radius: 14px; 
-            padding: 0 15px; 
-            color: var(--accent-green); 
-            font-weight: 600; 
-            cursor: pointer; 
-            transition: transform 0.2s;
-        }
-        .filter-btn:active { transform: scale(0.92); }
+        .search-input:focus { border-color: var(--accent-green); }
+        .filter-btn { background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 14px; padding: 0 16px; color: var(--accent-green); cursor: pointer; }
 
         /* Сетка товаров */
         .products-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .product-card { 
-            padding: 12px; 
-            display: flex; 
-            flex-direction: column; 
-            cursor: pointer; 
-            transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.3s, box-shadow 0.3s; 
-        }
-        .product-card:active { 
-            transform: scale(0.96); 
-            border-color: var(--accent-green); 
-            box-shadow: 0 0 15px var(--accent-glow); 
-        }
-        .product-img { width: 100%; height: 140px; object-fit: cover; border-radius: 14px; margin-bottom: 8px; }
+        .product-card { padding: 12px; display: flex; flex-direction: column; cursor: pointer; transition: transform 0.3s ease, border-color 0.3s; }
+        .product-card:active { transform: scale(0.97); }
+        .product-img { width: 100%; height: 145px; object-fit: cover; border-radius: 14px; margin-bottom: 8px; }
         .product-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .price-row { display: flex; gap: 6px; align-items: baseline; }
         .product-price { font-size: 15px; font-weight: 700; color: var(--accent-green); }
+        .old-price { font-size: 12px; color: var(--text-dim); text-decoration: line-through; }
 
-        /* Всплывающий шторка-экран товара (iOS Sheet) */
+        /* Шторка товара и оплаты (iOS Sheet) */
         .modal { 
-            position: fixed; 
-            inset: 0; 
-            background: rgba(0, 0, 0, 0.85); 
-            backdrop-filter: blur(25px); 
-            -webkit-backdrop-filter: blur(25px);
-            z-index: 200; 
-            display: flex; 
-            flex-direction: column; 
-            padding: 20px; 
-            overflow-y: auto; 
-            opacity: 0;
-            pointer-events: none;
-            transform: translateY(100%);
-            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); 
+            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            z-index: 200; display: flex; flex-direction: column; padding: 20px; overflow-y: auto; 
+            opacity: 0; pointer-events: none; transform: translateY(100%);
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
         }
-        .modal.active { 
-            opacity: 1;
-            pointer-events: auto;
-            transform: translateY(0);
-        }
-        .close-btn { align-self: flex-end; font-size: 28px; color: var(--text-dim); cursor: pointer; padding: 5px; }
-        
+        .modal.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
+        .close-btn { align-self: flex-end; font-size: 26px; color: var(--text-dim); cursor: pointer; }
+
         /* Размеры */
-        .sizes-row { display: flex; gap: 8px; margin: 15px 0; }
-        .size-chip { 
-            padding: 10px 16px; 
-            background: #2c2c2e; 
-            border-radius: 12px; 
-            font-size: 14px; 
-            cursor: pointer; 
-            border: 1px solid transparent; 
-            transition: all 0.2s;
-        }
-        .size-chip.active { 
-            border-color: var(--accent-green); 
-            background: rgba(0, 255, 135, 0.15); 
-            color: var(--accent-green); 
-            font-weight: bold; 
-            box-shadow: 0 0 10px var(--accent-glow);
-        }
+        .sizes-row { display: flex; gap: 8px; margin: 15px 0; flex-wrap: wrap; }
+        .size-chip { padding: 10px 16px; background: #2c2c2e; border-radius: 12px; font-size: 14px; cursor: pointer; border: 1px solid transparent; transition: all 0.3s ease; }
+        .size-chip.active { border-color: var(--accent-green); background: rgba(0, 255, 135, 0.15); color: var(--accent-green); font-weight: bold; }
         .size-chip.disabled { opacity: 0.3; text-decoration: line-through; cursor: not-allowed; }
 
-        /* Главная кнопка */
+        /* Кнопки */
         .btn-main { 
-            background: linear-gradient(135deg, #00ff87, #60efff); 
-            color: #000; 
-            font-weight: 700; 
-            border: none; 
-            padding: 16px; 
-            border-radius: 16px; 
-            font-size: 16px; 
-            cursor: pointer; 
-            width: 100%; 
-            box-shadow: 0 0 20px var(--accent-glow); 
-            transition: transform 0.2s, opacity 0.2s;
+            background: linear-gradient(135deg, #00ff87, #60efff); color: #000; font-weight: 700; 
+            border: none; padding: 16px; border-radius: 16px; font-size: 16px; cursor: pointer; width: 100%; 
+            box-shadow: 0 0 15px var(--accent-glow); transition: transform 0.2s ease, opacity 0.2s;
         }
-        .btn-main:active { transform: scale(0.97); opacity: 0.9; }
+        .btn-main:active { transform: scale(0.98); opacity: 0.9; }
 
-        /* Элементы корзины */
+        .btn-pay {
+            width: 100%; padding: 14px; border-radius: 14px; border: none; font-size: 16px; font-weight: 600;
+            cursor: pointer; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: transform 0.2s ease;
+        }
+        .btn-pay:active { transform: scale(0.98); }
+        .btn-apple { background: #fff; color: #000; }
+        .btn-google { background: #fff; color: #3c4043; border: 1px solid #dadce0; }
+
+        /* Корзина */
         .cart-item { display: flex; align-items: center; justify-content: space-between; padding: 12px; margin-bottom: 10px; }
-        .cart-item-info { display: flex; flex-direction: column; gap: 4px; }
-        .remove-btn { color: var(--danger); font-size: 13px; cursor: pointer; margin-top: 4px; }
+        .remove-btn { color: var(--danger); font-size: 13px; cursor: pointer; }
 
-        /* Формы в профиле */
+        /* Профиль и Формы */
         .form-group { margin-bottom: 12px; }
         .form-label { font-size: 12px; color: var(--text-dim); margin-bottom: 4px; display: block; }
-        .form-input { 
-            width: 100%; 
-            background: #1c1c1e; 
-            border: 1px solid #2c2c2e; 
-            border-radius: 12px; 
-            padding: 12px; 
-            color: #fff; 
-            font-size: 14px; 
-            outline: none; 
-            transition: border-color 0.3s;
-        }
-        .form-input:focus { border-color: var(--accent-green); }
+        .form-input { width: 100%; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 12px; padding: 12px; color: #fff; font-size: 14px; outline: none; transition: border-color 0.3s; }
+        .form-input.error { border-color: var(--danger); }
+        .error-text { color: var(--danger); font-size: 11px; margin-top: 3px; display: none; }
 
-        /* Нижняя навигация */
-        .nav-bar { 
-            position: fixed; 
-            bottom: 12px; 
-            left: 12px; 
-            right: 12px; 
-            height: 65px; 
-            display: flex; 
-            justify-content: space-around; 
-            align-items: center; 
-            z-index: 100; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-        .nav-item { 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            gap: 3px; 
-            color: var(--text-dim); 
-            font-size: 11px; 
-            cursor: pointer; 
-            transition: color 0.2s, transform 0.2s;
-        }
-        .nav-item:active { transform: scale(0.9); }
+        /* Навигация */
+        .nav-bar { position: fixed; bottom: 12px; left: 12px; right: 12px; height: 65px; display: flex; justify-content: space-around; align-items: center; z-index: 100; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; color: var(--text-dim); font-size: 11px; cursor: pointer; transition: color 0.3s ease; }
         .nav-item.active { color: var(--accent-green); font-weight: 600; }
+
+        .subtle-btn { background: none; border: none; color: #48484a; font-size: 12px; cursor: pointer; text-decoration: underline; padding: 8px; }
     </style>
 </head>
 <body>
@@ -216,7 +120,7 @@
     <div id="tab-goods" class="page active">
         <div class="header-search">
             <input type="text" class="search-input" placeholder="Поиск вещей..." id="searchInput" oninput="filterGoods()">
-            <button class="filter-btn" onclick="alert('Фильтры: По цене, По размеру')">⚙️</button>
+            <button class="filter-btn">⚙️</button>
         </div>
         <div class="products-grid" id="productsGrid"></div>
     </div>
@@ -224,7 +128,7 @@
     <!-- Вкладка 2: Поиск -->
     <div id="tab-search" class="page">
         <h2 style="margin-bottom: 15px;">Быстрый поиск</h2>
-        <input type="text" class="search-input" placeholder="Введите название (например, Худи)" style="width: 100%; margin-bottom: 15px;" oninput="searchCatalog(this.value)">
+        <input type="text" class="search-input" placeholder="Введите название..." style="width: 100%; margin-bottom: 15px;" oninput="searchCatalog(this.value)">
         <div id="searchResults" class="products-grid"></div>
     </div>
 
@@ -233,38 +137,94 @@
         <h2 style="margin-bottom: 15px;">Корзина</h2>
         <div id="cartList"></div>
         <div id="cartSummary" style="margin-top: 15px; font-size: 18px; font-weight: bold; text-align: right;">Итого: 0 грн</div>
-        <button class="btn-main" style="margin-top: 15px;" onclick="checkout()">Оформить заказ</button>
+        <button class="btn-main" style="margin-top: 15px;" onclick="proceedToCheckout()">Оформить заказ</button>
     </div>
 
     <!-- Вкладка 4: Профиль -->
     <div id="tab-profile" class="page">
         <h2 style="margin-bottom: 15px;">Мой профиль</h2>
         <div class="form-group">
-            <label class="form-label">ФИО Получателя</label>
-            <input type="text" class="form-input" id="profName" placeholder="Иванов Иван">
+            <label class="form-label">ФИО Получателя (Фамилия Имя Отчество)</label>
+            <input type="text" class="form-input" id="profName" placeholder="Иванов Иван Иванович" oninput="validateProfileInputs()">
+            <span class="error-text" id="errName">Введите реальные ФИО (минимум 2 слова)</span>
         </div>
         <div class="form-group">
             <label class="form-label">Номер телефона</label>
-            <input type="tel" class="form-input" id="profPhone" placeholder="+380XXXXXXXXX">
+            <input type="tel" class="form-input" id="profPhone" placeholder="+380991234567" oninput="validateProfileInputs()">
+            <span class="error-text" id="errPhone">Формат: +380XXXXXXXXX</span>
         </div>
         <div class="form-group">
             <label class="form-label">Город и № Новой Почты</label>
-            <input type="text" class="form-input" id="profAddress" placeholder="Киев, Отделение №1">
+            <input type="text" class="form-input" id="profAddress" placeholder="Киев, Отделение №1" oninput="validateProfileInputs()">
+            <span class="error-text" id="errAddress">Укажите город и отделение Новой Почты</span>
         </div>
-        <button class="btn-main" onclick="saveProfile()">Сохранить профиль</button>
+        <button class="btn-main" style="margin-top: 10px;" onclick="saveProfileManual()">Сохранить профиль</button>
+
+        <div style="margin-top: 30px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+            <button class="subtle-btn" style="color: var(--text-dim);" onclick="openSupport()">💬 Техническая поддержка</button>
+            <button class="subtle-btn" onclick="openAdminLogin()">Админ-панель</button>
+        </div>
     </div>
 
-    <!-- Модальное окно просмотра товара -->
+    <!-- Модальное окно товара -->
     <div class="modal" id="productModal">
-        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <span class="close-btn" onclick="closeModal('productModal')">&times;</span>
         <img id="modalImg" style="width:100%; height:220px; object-fit:cover; border-radius:16px; margin: 10px 0;">
         <h2 id="modalTitle"></h2>
-        <div id="modalPrice" style="color:var(--accent-green); font-size:20px; font-weight:bold; margin: 5px 0;"></div>
+        <div class="price-row" style="margin: 5px 0;">
+            <div id="modalPrice" style="color:var(--accent-green); font-size:20px; font-weight:bold;"></div>
+            <div id="modalOldPrice" class="old-price" style="font-size:15px;"></div>
+        </div>
         <p id="modalDesc" style="color:var(--text-dim); font-size:13px; margin-bottom: 15px;"></p>
         
         <div style="font-size:13px; font-weight:600;">Выбор размера:</div>
         <div class="sizes-row" id="modalSizes"></div>
         <button class="btn-main" onclick="addSelectedToCart()">В корзину</button>
+    </div>
+
+    <!-- Модальное окно Оплаты (Apple / Google Pay) -->
+    <div class="modal" id="payModal">
+        <span class="close-btn" onclick="closeModal('payModal')">&times;</span>
+        <h2 style="margin-bottom: 10px;">Выберите способ оплаты</h2>
+        <p style="color:var(--text-dim); font-size:13px; margin-bottom: 20px;" id="paySummaryText"></p>
+
+        <button class="btn-pay btn-apple" onclick="executePayment('Apple Pay')"> Pay</button>
+        <button class="btn-pay btn-google" onclick="executePayment('Google Pay')">G Pay</button>
+        <button class="btn-main" style="margin-top: 10px; background: #2c2c2e; color: #fff; box-shadow: none;" onclick="executePayment('При получении')">Оплата при получении</button>
+    </div>
+
+    <!-- Модальное окно Входа в Админку -->
+    <div class="modal" id="adminAuthModal">
+        <span class="close-btn" onclick="closeModal('adminAuthModal')">&times;</span>
+        <h2 style="margin-bottom: 15px;">Вход в Админ-Панель</h2>
+        <div class="form-group">
+            <input type="text" class="form-input" id="adminLogin" placeholder="Логин (admin)">
+        </div>
+        <div class="form-group">
+            <input type="password" class="form-input" id="adminPass" placeholder="Пароль (1234)">
+        </div>
+        <button class="btn-main" onclick="checkAdminAuth()">Войти</button>
+    </div>
+
+    <!-- Админ Панель (Управление товарами) -->
+    <div class="modal" id="adminPanelModal">
+        <span class="close-btn" onclick="closeModal('adminPanelModal')">&times;</span>
+        <h2 style="margin-bottom: 15px;">Редактор Товаров</h2>
+        
+        <div class="glass" style="padding: 12px; margin-bottom: 15px;">
+            <h4 id="adminFormTitle" style="margin-bottom: 10px;">Добавить / Изменить товар</h4>
+            <input type="hidden" id="editProdId">
+            <input type="text" class="form-input" id="admName" placeholder="Название" style="margin-bottom: 8px;">
+            <input type="number" class="form-input" id="admPrice" placeholder="Цена (грн)" style="margin-bottom: 8px;">
+            <input type="number" class="form-input" id="admOldPrice" placeholder="Старая цена (если есть)" style="margin-bottom: 8px;">
+            <input type="text" class="form-input" id="admImg" placeholder="Ссылка на фото" style="margin-bottom: 8px;">
+            <input type="text" class="form-input" id="admDesc" placeholder="Описание" style="margin-bottom: 8px;">
+            <input type="text" class="form-input" id="admSizes" placeholder="Размеры через запятую (S,M,L)" style="margin-bottom: 8px;">
+            <button class="btn-main" onclick="saveProductAdmin()">Сохранить товар</button>
+        </div>
+
+        <h3>Список товаров</h3>
+        <div id="adminProductsList" style="margin-top: 10px;"></div>
     </div>
 
     <!-- Навигация -->
@@ -279,10 +239,10 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        const products = [
-            { id: 1, name: "Oversize Black Hoodie", price: 1800, img: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=400", desc: "100% Плотный хлопок. Оверсайз крой.", sizes: { "S": true, "M": true, "L": false, "XL": true } },
-            { id: 2, name: "Nike Air Max Red", price: 3200, img: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400", desc: "Премиум кроссовки с амортизацией.", sizes: { "41": true, "42": false, "43": true } },
-            { id: 3, name: "Techwear Cargo Pants", price: 2100, img: "https://images.unsplash.com/photo-1517445312882-bc9910d016b7?w=400", desc: "Водоотталкивающая ткань с карманами.", sizes: { "M": true, "L": true, "XL": false } }
+        let products = JSON.parse(localStorage.getItem('storeProducts')) || [
+            { id: 1, name: "Oversize Black Hoodie", price: 1800, oldPrice: 2200, img: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=400", desc: "100% Плотный хлопок. Оверсайз крой.", sizes: ["S", "M", "XL"] },
+            { id: 2, name: "Nike Air Max Red", price: 3200, oldPrice: 0, img: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400", desc: "Премиум кроссовки с амортизацией.", sizes: ["41", "43"] },
+            { id: 3, name: "Techwear Cargo Pants", price: 2100, oldPrice: 2500, img: "https://images.unsplash.com/photo-1517445312882-bc9910d016b7?w=400", desc: "Водоотталкивающая ткань с карманами.", sizes: ["M", "L"] }
         ];
 
         let cart = [];
@@ -300,7 +260,10 @@
                 <div class="product-card glass" onclick="openProduct(${p.id})">
                     <img src="${p.img}" class="product-img">
                     <div class="product-title">${p.name}</div>
-                    <div class="product-price">${p.price} грн</div>
+                    <div class="price-row">
+                        <div class="product-price">${p.price} грн</div>
+                        ${p.oldPrice ? `<div class="old-price">${p.oldPrice} грн</div>` : ''}
+                    </div>
                 </div>
             `).join('');
         }
@@ -318,22 +281,19 @@
             document.getElementById('modalImg').src = currentProduct.img;
             document.getElementById('modalTitle').innerText = currentProduct.name;
             document.getElementById('modalPrice').innerText = `${currentProduct.price} грн`;
+            document.getElementById('modalOldPrice').innerText = currentProduct.oldPrice ? `${currentProduct.oldPrice} грн` : '';
             document.getElementById('modalDesc').innerText = currentProduct.desc;
 
             const sizesContainer = document.getElementById('modalSizes');
-            sizesContainer.innerHTML = Object.entries(currentProduct.sizes).map(([size, available]) => {
-                if (available) {
-                    return `<div class="size-chip" onclick="selectSize('${size}', this)">${size}</div>`;
-                } else {
-                    return `<div class="size-chip disabled">${size} (Нет)</div>`;
-                }
-            }).join('');
+            sizesContainer.innerHTML = currentProduct.sizes.map(s => `
+                <div class="size-chip" onclick="selectSize('${s}', this)">${s}</div>
+            `).join('');
 
             selectedSize = null;
             document.getElementById('productModal').classList.add('active');
         }
 
-        function closeModal() { document.getElementById('productModal').classList.remove('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
         function selectSize(size, el) {
             document.querySelectorAll('.size-chip').forEach(c => c.classList.remove('active'));
@@ -342,16 +302,15 @@
         }
 
         function addSelectedToCart() {
-            if (!selectedSize) { tg.showAlert("Выберите доступный размер!"); return; }
+            if (!selectedSize) return;
             cart.push({ ...currentProduct, selectedSize });
-            closeModal();
-            tg.showAlert(`Добавлено в корзину: ${currentProduct.name} (${selectedSize})`);
+            closeModal('productModal');
         }
 
         function renderCart() {
             const list = document.getElementById('cartList');
             if (cart.length === 0) {
-                list.innerHTML = "<p style='color:var(--text-dim);'>Корзина пуста</p>";
+                list.innerHTML = "<p style='color:var(--text-dim); text-align:center;'>Корзина пуста</p>";
                 document.getElementById('cartSummary').innerText = "Итого: 0 грн";
                 return;
             }
@@ -361,9 +320,9 @@
                 total += item.price;
                 return `
                     <div class="cart-item glass">
-                        <div class="cart-item-info">
-                            <strong>${item.name}</strong>
-                            <span style="font-size:12px; color:var(--text-dim);">Размер: ${item.selectedSize}</span>
+                        <div>
+                            <strong>${item.name}</strong><br>
+                            <span style="font-size:12px; color:var(--text-dim);">Размер: ${item.selectedSize}</span><br>
                             <span style="color:var(--accent-green); font-weight:bold;">${item.price} грн</span>
                         </div>
                         <div class="remove-btn" onclick="removeFromCart(${idx})">Удалить</div>
@@ -375,14 +334,34 @@
 
         function removeFromCart(idx) { cart.splice(idx, 1); renderCart(); }
 
-        function saveProfile() {
-            const profile = {
-                name: document.getElementById('profName').value,
-                phone: document.getElementById('profPhone').value,
-                address: document.getElementById('profAddress').value
-            };
-            localStorage.setItem('userProfile', JSON.stringify(profile));
-            tg.showAlert("Данные сохранены!");
+        /* Валидация профиля */
+        function isProfileValid() {
+            const name = document.getElementById('profName').value.trim();
+            const phone = document.getElementById('profPhone').value.trim();
+            const address = document.getElementById('profAddress').value.trim();
+
+            const nameValid = /^[А-Яа-яЁёІіЇїЄєA-Za-z]+\s+[А-Яа-яЁёІіЇїЄєA-Za-z]+/.test(name);
+            const phoneValid = /^\+380\d{9}$/.test(phone);
+            const addressValid = address.length >= 5 && (address.toLowerCase().includes('почт') || address.toLowerCase().includes('отделен') || address.includes('№'));
+
+            document.getElementById('errName').style.display = nameValid ? 'none' : 'block';
+            document.getElementById('errPhone').style.display = phoneValid ? 'none' : 'block';
+            document.getElementById('errAddress').style.display = addressValid ? 'none' : 'block';
+
+            return nameValid && phoneValid && addressValid;
+        }
+
+        function validateProfileInputs() { isProfileValid(); }
+
+        function saveProfileManual() {
+            if (isProfileValid()) {
+                const profile = {
+                    name: document.getElementById('profName').value,
+                    phone: document.getElementById('profPhone').value,
+                    address: document.getElementById('profAddress').value
+                };
+                localStorage.setItem('userProfile', JSON.stringify(profile));
+            }
         }
 
         function loadProfile() {
@@ -395,28 +374,118 @@
             }
         }
 
-        function checkout() {
-            if (cart.length === 0) { tg.showAlert("Корзина пуста!"); return; }
-            const profile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+        function proceedToCheckout() {
+            if (cart.length === 0) return;
             
+            if (!isProfileValid()) {
+                switchTab('profile', document.querySelectorAll('.nav-item')[3]);
+                return;
+            }
+
+            saveProfileManual();
+            const total = cart.reduce((sum, item) => sum + item.price, 0);
+            document.getElementById('paySummaryText').innerText = `Сумма к оплате: ${total} грн`;
+            document.getElementById('payModal').classList.add('active');
+        }
+
+        function executePayment(method) {
+            closeModal('payModal');
+            const profile = JSON.parse(localStorage.getItem('userProfile'));
             const orderData = {
                 cart: cart,
                 profile: profile,
+                payMethod: method,
                 total: cart.reduce((sum, item) => sum + item.price, 0)
             };
-
             tg.sendData(JSON.stringify(orderData));
+        }
+
+        /* Поддержка и Админка */
+        function openSupport() { tg.openTelegramLink("https://t.me/telegram"); }
+
+        function openAdminLogin() { document.getElementById('adminAuthModal').classList.add('active'); }
+
+        function checkAdminAuth() {
+            const l = document.getElementById('adminLogin').value;
+            const p = document.getElementById('adminPass').value;
+            if (l === 'admin' && p === '1234') {
+                closeModal('adminAuthModal');
+                renderAdminProducts();
+                document.getElementById('adminPanelModal').classList.add('active');
+            }
+        }
+
+        function renderAdminProducts() {
+            const container = document.getElementById('adminProductsList');
+            container.innerHTML = products.map(p => `
+                <div class="glass" style="padding:10px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <strong>${p.name}</strong> - ${p.price} грн
+                    </div>
+                    <div>
+                        <button style="color:var(--accent-green); background:none; border:none; margin-right:8px;" onclick="editProductAdmin(${p.id})">✏️</button>
+                        <button style="color:var(--danger); background:none; border:none;" onclick="deleteProductAdmin(${p.id})">🗑</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function saveProductAdmin() {
+            const id = document.getElementById('editProdId').value;
+            const name = document.getElementById('admName').value;
+            const price = parseInt(document.getElementById('admPrice').value);
+            const oldPrice = parseInt(document.getElementById('admOldPrice').value) || 0;
+            const img = document.getElementById('admImg').value;
+            const desc = document.getElementById('admDesc').value;
+            const sizes = document.getElementById('admSizes').value.split(',').map(s => s.trim());
+
+            if (!name || !price) return;
+
+            if (id) {
+                const prod = products.find(p => p.id == id);
+                Object.assign(prod, { name, price, oldPrice, img, desc, sizes });
+            } else {
+                products.push({ id: Date.now(), name, price, oldPrice, img, desc, sizes });
+            }
+
+            localStorage.setItem('storeProducts', JSON.stringify(products));
+            renderProducts(products, 'productsGrid');
+            renderAdminProducts();
+            
+            document.getElementById('editProdId').value = '';
+            document.getElementById('admName').value = '';
+            document.getElementById('admPrice').value = '';
+            document.getElementById('admOldPrice').value = '';
+            document.getElementById('admImg').value = '';
+            document.getElementById('admDesc').value = '';
+            document.getElementById('admSizes').value = '';
+        }
+
+        function editProductAdmin(id) {
+            const p = products.find(prod => prod.id === id);
+            document.getElementById('editProdId').value = p.id;
+            document.getElementById('admName').value = p.name;
+            document.getElementById('admPrice').value = p.price;
+            document.getElementById('admOldPrice').value = p.oldPrice || '';
+            document.getElementById('admImg').value = p.img;
+            document.getElementById('admDesc').value = p.desc;
+            document.getElementById('admSizes').value = p.sizes.join(', ');
+        }
+
+        function deleteProductAdmin(id) {
+            products = products.filter(p => p.id !== id);
+            localStorage.setItem('storeProducts', JSON.stringify(products));
+            renderProducts(products, 'productsGrid');
+            renderAdminProducts();
         }
 
         function filterGoods() {
             const q = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = products.filter(p => p.name.toLowerCase().includes(q));
-            renderProducts(filtered, 'productsGrid');
+            renderProducts(products.filter(p => p.name.toLowerCase().includes(q)), 'productsGrid');
         }
 
         function searchCatalog(val) {
-            const filtered = products.filter(p => p.name.toLowerCase().includes(val.toLowerCase()));
-            renderProducts(filtered, 'searchResults');
+            renderProducts(products.filter(p => p.name.toLowerCase().includes(val.toLowerCase())), 'searchResults');
         }
 
         init();
