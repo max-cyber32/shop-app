@@ -11,15 +11,28 @@
             --card-bg: rgba(28, 28, 30, 0.75);
             --card-border: rgba(255, 255, 255, 0.08);
             --accent-green: #00ff87;
-            --accent-glow: rgba(0, 255, 135, 0.3);
+            --accent-glow: rgba(0, 255, 135, 0.35);
             --text-main: #f5f5f7;
             --text-dim: #8e8e93;
             --danger: #ff453a;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background-color: var(--bg-color); color: var(--text-main); padding-bottom: 90px; }
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; 
+            -webkit-tap-highlight-color: transparent; 
+        }
 
+        body { 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            padding-bottom: 90px; 
+            overflow-x: hidden;
+        }
+
+        /* Эффект жидкого стекла */
         .glass {
             background: var(--card-bg);
             backdrop-filter: blur(25px);
@@ -28,51 +41,172 @@
             border-radius: 20px;
         }
 
-        /* Страницы */
-        .page { display: none; padding: 15px; animation: fadeIn 0.25s ease-in-out; }
-        .page.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        /* Страницы с ультра-плавной анимацией */
+        .page { 
+            display: none; 
+            padding: 15px; 
+            opacity: 0;
+            transform: scale(0.97) translateY(8px);
+            transition: opacity 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .page.active { 
+            display: block; 
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
 
-        /* Поиск и шапка */
+        /* Шапка и поиск */
         .header-search { display: flex; gap: 10px; margin-bottom: 15px; }
-        .search-input { flex: 1; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 14px; padding: 12px 15px; color: #fff; font-size: 15px; outline: none; }
-        .search-input:focus { border-color: var(--accent-green); box-shadow: 0 0 10px var(--accent-glow); }
-        .filter-btn { background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 14px; padding: 0 15px; color: var(--accent-green); font-weight: 600; cursor: pointer; }
+        .search-input { 
+            flex: 1; 
+            background: #1c1c1e; 
+            border: 1px solid #2c2c2e; 
+            border-radius: 14px; 
+            padding: 12px 15px; 
+            color: #fff; 
+            font-size: 15px; 
+            outline: none; 
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .search-input:focus { 
+            border-color: var(--accent-green); 
+            box-shadow: 0 0 12px var(--accent-glow); 
+        }
+        .filter-btn { 
+            background: #1c1c1e; 
+            border: 1px solid #2c2c2e; 
+            border-radius: 14px; 
+            padding: 0 15px; 
+            color: var(--accent-green); 
+            font-weight: 600; 
+            cursor: pointer; 
+            transition: transform 0.2s;
+        }
+        .filter-btn:active { transform: scale(0.92); }
 
         /* Сетка товаров */
         .products-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .product-card { padding: 12px; display: flex; flex-direction: column; cursor: pointer; transition: 0.2s; }
-        .product-card:active { transform: scale(0.97); border-color: var(--accent-green); }
+        .product-card { 
+            padding: 12px; 
+            display: flex; 
+            flex-direction: column; 
+            cursor: pointer; 
+            transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.3s, box-shadow 0.3s; 
+        }
+        .product-card:active { 
+            transform: scale(0.96); 
+            border-color: var(--accent-green); 
+            box-shadow: 0 0 15px var(--accent-glow); 
+        }
         .product-img { width: 100%; height: 140px; object-fit: cover; border-radius: 14px; margin-bottom: 8px; }
         .product-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
         .product-price { font-size: 15px; font-weight: 700; color: var(--accent-green); }
 
-        /* Модальное окно товара */
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(20px); z-index: 200; display: none; flex-direction: column; padding: 20px; overflow-y: auto; }
-        .modal.active { display: flex; }
-        .close-btn { align-self: flex-end; font-size: 26px; color: var(--text-dim); cursor: pointer; }
+        /* Всплывающий шторка-экран товара (iOS Sheet) */
+        .modal { 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(0, 0, 0, 0.85); 
+            backdrop-filter: blur(25px); 
+            -webkit-backdrop-filter: blur(25px);
+            z-index: 200; 
+            display: flex; 
+            flex-direction: column; 
+            padding: 20px; 
+            overflow-y: auto; 
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+        }
+        .modal.active { 
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+        .close-btn { align-self: flex-end; font-size: 28px; color: var(--text-dim); cursor: pointer; padding: 5px; }
         
+        /* Размеры */
         .sizes-row { display: flex; gap: 8px; margin: 15px 0; }
-        .size-chip { padding: 10px 16px; background: #2c2c2e; border-radius: 12px; font-size: 14px; cursor: pointer; border: 1px solid transparent; }
-        .size-chip.active { border-color: var(--accent-green); background: rgba(0, 255, 135, 0.15); color: var(--accent-green); font-weight: bold; }
+        .size-chip { 
+            padding: 10px 16px; 
+            background: #2c2c2e; 
+            border-radius: 12px; 
+            font-size: 14px; 
+            cursor: pointer; 
+            border: 1px solid transparent; 
+            transition: all 0.2s;
+        }
+        .size-chip.active { 
+            border-color: var(--accent-green); 
+            background: rgba(0, 255, 135, 0.15); 
+            color: var(--accent-green); 
+            font-weight: bold; 
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
         .size-chip.disabled { opacity: 0.3; text-decoration: line-through; cursor: not-allowed; }
 
-        .btn-main { background: linear-gradient(135deg, #00ff87, #60efff); color: #000; font-weight: 700; border: none; padding: 16px; border-radius: 16px; font-size: 16px; cursor: pointer; width: 100%; box-shadow: 0 0 15px var(--accent-glow); }
-        .btn-main:active { opacity: 0.8; }
+        /* Главная кнопка */
+        .btn-main { 
+            background: linear-gradient(135deg, #00ff87, #60efff); 
+            color: #000; 
+            font-weight: 700; 
+            border: none; 
+            padding: 16px; 
+            border-radius: 16px; 
+            font-size: 16px; 
+            cursor: pointer; 
+            width: 100%; 
+            box-shadow: 0 0 20px var(--accent-glow); 
+            transition: transform 0.2s, opacity 0.2s;
+        }
+        .btn-main:active { transform: scale(0.97); opacity: 0.9; }
 
         /* Элементы корзины */
         .cart-item { display: flex; align-items: center; justify-content: space-between; padding: 12px; margin-bottom: 10px; }
         .cart-item-info { display: flex; flex-direction: column; gap: 4px; }
         .remove-btn { color: var(--danger); font-size: 13px; cursor: pointer; margin-top: 4px; }
 
-        /* Поля формы в профиле */
+        /* Формы в профиле */
         .form-group { margin-bottom: 12px; }
         .form-label { font-size: 12px; color: var(--text-dim); margin-bottom: 4px; display: block; }
-        .form-input { width: 100%; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 12px; padding: 12px; color: #fff; font-size: 14px; outline: none; }
+        .form-input { 
+            width: 100%; 
+            background: #1c1c1e; 
+            border: 1px solid #2c2c2e; 
+            border-radius: 12px; 
+            padding: 12px; 
+            color: #fff; 
+            font-size: 14px; 
+            outline: none; 
+            transition: border-color 0.3s;
+        }
+        .form-input:focus { border-color: var(--accent-green); }
 
-        /* Нижнее меню */
-        .nav-bar { position: fixed; bottom: 12px; left: 12px; right: 12px; height: 65px; display: flex; justify-content: space-around; align-items: center; z-index: 100; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; color: var(--text-dim); font-size: 11px; cursor: pointer; }
+        /* Нижняя навигация */
+        .nav-bar { 
+            position: fixed; 
+            bottom: 12px; 
+            left: 12px; 
+            right: 12px; 
+            height: 65px; 
+            display: flex; 
+            justify-content: space-around; 
+            align-items: center; 
+            z-index: 100; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .nav-item { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 3px; 
+            color: var(--text-dim); 
+            font-size: 11px; 
+            cursor: pointer; 
+            transition: color 0.2s, transform 0.2s;
+        }
+        .nav-item:active { transform: scale(0.9); }
         .nav-item.active { color: var(--accent-green); font-weight: 600; }
     </style>
 </head>
@@ -145,7 +279,6 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // База товаров (симуляция)
         const products = [
             { id: 1, name: "Oversize Black Hoodie", price: 1800, img: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=400", desc: "100% Плотный хлопок. Оверсайз крой.", sizes: { "S": true, "M": true, "L": false, "XL": true } },
             { id: 2, name: "Nike Air Max Red", price: 3200, img: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400", desc: "Премиум кроссовки с амортизацией.", sizes: { "41": true, "42": false, "43": true } },
@@ -156,7 +289,6 @@
         let currentProduct = null;
         let selectedSize = null;
 
-        // Инициализация
         function init() {
             renderProducts(products, 'productsGrid');
             loadProfile();
